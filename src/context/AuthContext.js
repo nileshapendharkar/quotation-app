@@ -29,9 +29,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (userId, password) => {
+  const login = async (userId, password, otpToken = null) => {
     setLoading(true);
-    const res = await apiRequest('/auth/login', 'POST', { userId, mobile: userId, password });
+    const payload = { userId, mobile: userId, password };
+    if (otpToken) payload.otpToken = otpToken;
+    const res = await apiRequest('/auth/login', 'POST', payload);
     setLoading(false);
 
     if (res.success) {
@@ -43,6 +45,13 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     }
     return { success: false, message: res.message || 'Login failed' };
+  };
+
+  const sendOtp = async (mobile) => {
+    setLoading(true);
+    const res = await apiRequest('/auth/send-otp', 'POST', { mobile });
+    setLoading(false);
+    return res;
   };
 
   const register = async (userData) => {
@@ -98,6 +107,7 @@ export const AuthProvider = ({ children }) => {
       token,
       loading,
       login,
+      sendOtp,
       register,
       logout,
       updateProfile,

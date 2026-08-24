@@ -1,153 +1,251 @@
 import React, { useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { Heart, Trash2, PlusCircle, ArrowLeft } from 'lucide-react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, SafeAreaView, ImageBackground, Dimensions } from 'react-native';
+import { Bookmark, Trash2, PlusCircle, Menu, Search, Bell } from 'lucide-react-native';
 import { FavoriteContext } from '../context/FavoriteContext';
 import { CartContext } from '../context/CartContext';
 import { getImageUrl } from '../api';
 
-export default function FavoriteScreen({ onNavigateHome }) {
+const { width } = Dimensions.get('window');
+
+export default function FavoriteScreen({ onNavigateHome, onOpenMenu, onNavigateNotifications }) {
   const { favorites, toggleFavorite } = useContext(FavoriteContext);
   const { addToCart } = useContext(CartContext);
+  const unreadNotifications = 0; // Or grab from context if available
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topHeader}>
-        <Text style={styles.headerTitle}>Favorite Bookmarks</Text>
-        <Text style={styles.headerSub}>{favorites.length} Saved Products (Name + Image Only)</Text>
-      </View>
-
-      {favorites.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Heart size={48} color="#334155" />
-          <Text style={styles.emptyTitle}>No Favorite Products Yet</Text>
-          <Text style={styles.emptySub}>Tap the heart icon on any product to save it here.</Text>
-          <TouchableOpacity style={styles.browseBtn} onPress={onNavigateHome}>
-            <Text style={styles.browseText}>Browse Products</Text>
+    <ImageBackground
+      source={require('../../assets/splash_bg.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onOpenMenu} style={styles.headerIconBtn}>
+            <Menu color="#27347a" size={28} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>SAVED</Text>
+          <View style={styles.headerRight}>
+             <TouchableOpacity style={styles.headerIconBtn}>
+               <Search color="#27347a" size={24} />
+             </TouchableOpacity>
+             <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>
+               <Bell color="#27347a" size={24} />
+               {unreadNotifications > 0 && (
+                 <View style={styles.badge}>
+                   <Text style={styles.badgeText}>{unreadNotifications}</Text>
+                 </View>
+               )}
+             </TouchableOpacity>
+          </View>
         </View>
-      ) : (
-        <FlatList
-          data={favorites}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <View style={styles.favoriteCard}>
-              <Image source={getImageUrl(item.image)} style={styles.cardImage} />
 
-              <View style={styles.cardInfo}>
-                <Text style={styles.cardCategory}>{item.categoryName || 'Product Catalog'}</Text>
-                <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
-                <Text style={styles.zeroPricePolicy}>Quotation Purpose • No Price</Text>
-
-                <View style={styles.actionRow}>
-                  <TouchableOpacity 
-                    style={styles.addCartBtn}
-                    onPress={() => addToCart(item, 1)}
-                  >
-                    <PlusCircle size={14} color="#fff" />
-                    <Text style={styles.addCartText}>Add to Quote Cart</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={styles.removeBtn}
-                    onPress={() => toggleFavorite(item)}
-                  >
-                    <Trash2 size={16} color="#ef4444" />
+        {favorites.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Bookmark size={48} color="#27347a" />
+            <Text style={styles.emptyTitle}>No Saved Products</Text>
+            <Text style={styles.emptySub}>Tap the bookmark icon on any product to save it here.</Text>
+            <TouchableOpacity style={styles.browseBtn} onPress={onNavigateHome}>
+              <Text style={styles.browseText}>Browse Catalog</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={favorites}
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <View style={styles.favoriteCard}>
+                
+                {/* Top Image Section */}
+                <View style={styles.cardImageContainer}>
+                  <Image source={getImageUrl(item.image)} style={styles.cardImage} resizeMode="contain" />
+                  <TouchableOpacity style={styles.bookmarkIconBtn} onPress={() => toggleFavorite(item)}>
+                    <View style={styles.bookmarkCircle}>
+                      <Bookmark color="#ffffff" fill="#ffffff" size={14} />
+                    </View>
                   </TouchableOpacity>
                 </View>
+
+                {/* Bottom Info Section */}
+                <View style={styles.cardInfo}>
+                  <View style={styles.textWrapper}>
+                    <Text style={styles.cardCategory} numberOfLines={1}>{item.categoryName || 'PRODUCT'}</Text>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{item.name}</Text>
+                  </View>
+
+                  {/* Actions Row */}
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity 
+                      style={styles.addCartBtn}
+                      onPress={() => addToCart(item, 1)}
+                    >
+                      <PlusCircle size={14} color="#ffffff" />
+                      <Text style={styles.addCartText}>Add to Cart for Quatation</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={styles.removeBtn}
+                      onPress={() => toggleFavorite(item)}
+                    >
+                      <Trash2 size={16} color="#ffffff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
               </View>
-            </View>
-          )}
-        />
-      )}
-    </View>
+            )}
+          />
+        )}
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    width: '100%',
+    height: '100%',
   },
-  topHeader: {
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 45,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingTop: 10,
+    paddingBottom: 15,
+  },
+  headerIconBtn: {
+    padding: 8,
+    position: 'relative',
   },
   headerTitle: {
-    color: '#0f172a',
-    fontSize: 20,
-    fontWeight: '800',
+    color: '#27347a',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
-  headerSub: {
-    color: '#0ea5e9',
-    fontSize: 12,
-    marginTop: 2,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 6,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: 'bold',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 10,
     paddingBottom: 80,
-    gap: 14,
   },
   favoriteCard: {
-    flexDirection: 'row',
+    width: (width - 40) / 2, // 2 columns with margin
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    overflow: 'hidden',
+    marginHorizontal: 10,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-  },
-  cardImage: {
-    width: 110,
-    height: 110,
-    backgroundColor: '#f1f5f9',
-  },
-  cardInfo: {
-    flex: 1,
-    padding: 12,
+    borderRadius: 0, // In screenshot, outer border doesn't seem heavily rounded, just sharp edges for the bottom white part. Actually let's use tiny radius if any, looks flat in screenshot
+    overflow: 'hidden',
     justifyContent: 'space-between',
   },
+  cardImageContainer: {
+    width: '100%',
+    height: 150,
+    backgroundColor: '#dcf0fa', // The specific light blue tint from the screenshot
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    padding: 10,
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  bookmarkIconBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 10,
+  },
+  bookmarkCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#27347a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardInfo: {
+    backgroundColor: '#ffffff',
+    padding: 10,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  textWrapper: {
+    alignItems: 'center',
+    marginBottom: 10,
+    minHeight: 45,
+    justifyContent: 'center',
+  },
   cardCategory: {
-    color: '#0ea5e9',
-    fontSize: 11,
-    fontWeight: '700',
+    color: '#000000',
+    fontSize: 9,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    textAlign: 'center',
   },
   cardTitle: {
-    color: '#0f172a',
+    color: '#27347a',
     fontSize: 14,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  zeroPricePolicy: {
-    color: '#64748b',
-    fontSize: 11,
-    marginVertical: 4,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginTop: 4,
+    textTransform: 'uppercase',
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 6,
   },
   addCartBtn: {
-    backgroundColor: '#0ea5e9',
+    flex: 1,
+    backgroundColor: '#38bdf8', // Cyan-ish blue from screenshot
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    gap: 4,
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
   addCartText: {
     color: '#ffffff',
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '800',
+    marginLeft: 4,
   },
   removeBtn: {
-    padding: 6,
+    backgroundColor: '#ef4444',
+    padding: 8,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyBox: {
     flex: 1,
@@ -168,7 +266,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   browseBtn: {
-    backgroundColor: '#0ea5e9',
+    backgroundColor: '#27347a',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,

@@ -1,190 +1,209 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
-import { Menu, Bell, Plus, FileText, FileEdit, Send, FileX, ChevronRight, Info, HelpCircle, PhoneCall } from 'lucide-react-native';
+import React, { useContext, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ImageBackground, Image, Dimensions } from 'react-native';
+import { Menu, Bell, Plus, Info } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOrders, onNavigateNotifications }) {
   const { user } = useContext(AuthContext);
+  const [activeTab, setActiveTab] = useState('Create');
 
-  const stats = [
-    { title: 'Total Quotations', count: '0', icon: FileText, color: '#3b82f6', bgColor: '#eff6ff' },
-    { title: 'Draft', count: '0', icon: FileEdit, color: '#22c55e', bgColor: '#f0fdf4' },
-    { title: 'Submitted', count: '0', icon: Send, color: '#f59e0b', bgColor: '#fffbeb' },
-    { title: 'Declined', count: '0', icon: FileX, color: '#a855f7', bgColor: '#faf5ff' },
-  ];
-
-  const recentOrders = [];
+  const tabs = ['Create', 'Total', 'Draft', 'Submit', 'Decline'];
+  
   const unreadNotifications = 0;
 
+  const handleTabPress = (tab) => {
+    setActiveTab(tab);
+    // In a full implementation, this would also scroll the horizontal list to the correct index
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onOpenMenu} style={styles.headerIconBtn}>
-          <Menu color="#0f172a" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Quotation App</Text>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>
-          <Bell color="#0f172a" size={24} />
-          {unreadNotifications > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadNotifications}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Welcome Card */}
-        <View style={styles.welcomeCard}>
-          <View style={styles.welcomeTextContent}>
-            <Text style={styles.welcomeLabel}>Welcome back,</Text>
-            <Text style={styles.companyName} numberOfLines={1}>{user?.companyName || 'Mahesh Enterprises'}</Text>
-            <Text style={styles.welcomeSubtext}>Create and manage your quotations easily.</Text>
-          </View>
-          <View style={styles.welcomeIllustration}>
-            <View style={styles.clipboardIcon}>
-              <View style={styles.clipboardClip} />
-              <View style={styles.clipboardLines}>
-                <View style={styles.line} />
-                <View style={styles.line} />
-                <View style={styles.line} />
+    <ImageBackground
+      source={require('../../assets/splash_bg.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onOpenMenu} style={styles.headerIconBtn}>
+            <Menu color="#1e3a8a" size={28} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>HOME</Text>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>
+            <Bell color="#1e3a8a" size={24} />
+            {unreadNotifications > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadNotifications}</Text>
               </View>
-              <View style={styles.plusBadge}>
-                <Plus color="#ffffff" size={14} />
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Create Button */}
-        <TouchableOpacity style={styles.createBtn} onPress={onNavigateProduct}>
-          <Plus color="#ffffff" size={20} style={{ marginRight: 8 }} />
-          <Text style={styles.createBtnText}>Create New Quotation</Text>
-        </TouchableOpacity>
-
-        {/* Stats Grid */}
-        <View style={styles.statsContainer}>
-          {stats.map((stat, index) => {
-            const IconComp = stat.icon;
-            return (
-              <TouchableOpacity key={index} style={styles.statCard} onPress={onNavigateOrders}>
-                <View style={[styles.statIconBox, { backgroundColor: stat.bgColor }]}>
-                  <IconComp color={stat.color} size={20} />
-                </View>
-                <Text style={styles.statTitle}>{stat.title}</Text>
-                <Text style={styles.statCount}>{stat.count}</Text>
-                <View style={styles.viewAllRow}>
-                  <Text style={styles.viewAllText}>View All</Text>
-                  <ChevronRight color="#0ea5e9" size={14} />
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Recent Quotations */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Quotations</Text>
-          <TouchableOpacity onPress={onNavigateOrders}>
-            <Text style={styles.sectionLink}>View All</Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        {recentOrders.length === 0 ? (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Welcome Card */}
+          <View style={styles.welcomeCard}>
+            <View style={styles.welcomeTextContent}>
+              <Text style={styles.welcomeLabel}>Welcome back,</Text>
+              <Text style={styles.companyName} numberOfLines={1}>{(user && user.companyName) || 'Bunnny Enterprises'}</Text>
+              <Text style={styles.dateText}>19 August, 2026</Text>
+              
+              <Text style={styles.welcomeSubtextBold}>The Easy Way to Create & Manage Quotations</Text>
+              <Text style={styles.welcomeSubtext}>
+                Create professional quotations in just a few clicks, keep all your quotation records organized, and manage your entire quotation workflow effortlessly. Work smarter, respond faster, and stay on top of every business opportunity.
+              </Text>
+            </View>
+            <View style={styles.avatarContainer}>
+              <Image 
+                source={require('../../assets/avatar.png')} 
+                style={styles.avatar} 
+              />
+            </View>
+          </View>
+
+          {/* Horizontal Tabs */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
+            {tabs.map((tab) => (
+              <TouchableOpacity key={tab} style={styles.tabBtn} onPress={() => handleTabPress(tab)}>
+                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+                {activeTab === tab && <View style={styles.activeDot} />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Action/Stat Cards (Horizontal Scroll) */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsScrollContainer}>
+            {/* Create Card */}
+            <TouchableOpacity style={styles.createCard} onPress={onNavigateProduct}>
+              <View style={styles.createIconCircle}>
+                <Plus color="#ffffff" size={40} />
+              </View>
+            </TouchableOpacity>
+
+            {/* Total Card */}
+            <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
+              <View style={styles.statImageContainer}>
+                <Image source={require('../../assets/home_total.png')} style={styles.statImage} resizeMode="contain" />
+              </View>
+              <View style={styles.statBottomContent}>
+                <Text style={styles.statNumber}>05</Text>
+                <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Draft Card */}
+            <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
+              <View style={styles.statImageContainer}>
+                <Image source={require('../../assets/home_draft.png')} style={styles.statImage} resizeMode="contain" />
+              </View>
+              <View style={styles.statBottomContent}>
+                <Text style={styles.statNumber}>02</Text>
+                <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Submit Card */}
+            <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
+              <View style={styles.statImageContainer}>
+                <Image source={require('../../assets/home_submit.png')} style={styles.statImage} resizeMode="contain" />
+              </View>
+              <View style={styles.statBottomContent}>
+                <Text style={styles.statNumber}>01</Text>
+                <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Decline Card */}
+            <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
+              <View style={styles.statImageContainer}>
+                <Image source={require('../../assets/home_decline.png')} style={styles.statImage} resizeMode="contain" />
+              </View>
+              <View style={styles.statBottomContent}>
+                <Text style={styles.statNumber}>01</Text>
+                <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Recent Quotations */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Quatations</Text>
+            <TouchableOpacity onPress={onNavigateOrders}>
+              <Text style={styles.sectionLink}>View All {'>'}</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.emptyRecentBox}>
             <Text style={styles.emptyRecentText}>No Recent Quotations</Text>
           </View>
-        ) : (
-          <View style={styles.recentList}>
-            {recentOrders.map((order, index) => (
-              <TouchableOpacity key={index} style={styles.recentItem}>
-                <View style={styles.recentIconBox}>
-                  <FileText color="#3b82f6" size={20} />
-                </View>
-                <View style={styles.recentContent}>
-                  <Text style={styles.recentId}>{order.id}</Text>
-                  <Text style={styles.recentDetails}>{order.date} • {order.items} Items</Text>
-                </View>
-                <View style={[
-                  styles.statusBadge, 
-                  order.status === 'Draft' ? styles.statusDraft : styles.statusSubmitted
-                ]}>
-                  <Text style={[
-                    styles.statusText,
-                    order.status === 'Draft' ? styles.statusTextDraft : styles.statusTextSubmitted
-                  ]}>{order.status}</Text>
-                </View>
-                <ChevronRight color="#cbd5e1" size={20} style={{ marginLeft: 8 }} />
-              </TouchableOpacity>
-            ))}
+
+          {/* Info Box */}
+          <View style={styles.infoBox}>
+            <View style={styles.infoIconCircle}>
+              <Info color="#000" size={14} />
+            </View>
+            <Text style={styles.infoText}>
+              Prices are not included in the quotation; only the product names and quantities are mentioned.
+            </Text>
           </View>
-        )}
 
-        {/* Info Box */}
-        <View style={styles.infoBox}>
-          <Info color="#64748b" size={20} style={{ marginTop: 2, marginRight: 12 }} />
-          <Text style={styles.infoText}>
-            Prices are not shown in this quotation. Only product names and quantities are displayed.
-          </Text>
-        </View>
+          {/* Quick Action */}
+          <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Quick Action</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsContainer}>
+            <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: '#ffd4b2' }]}>
+              <View style={styles.quickActionImageContainer}>
+                 <Image source={require('../../assets/home_how_to_use.png')} style={styles.quickActionImage} resizeMode="contain" />
+              </View>
+              <View style={styles.quickActionFooter}>
+                <Text style={styles.quickActionText}>How to Use</Text>
+                <Text style={styles.quickActionArrow}>{'>'}</Text>
+              </View>
+            </TouchableOpacity>
 
-        {/* Quick Actions */}
-        <Text style={[styles.sectionTitle, { marginTop: 8, marginBottom: 12 }]}>Quick Actions</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsContainer}>
-          <TouchableOpacity style={styles.actionBtn}>
-            <View style={[styles.actionIconBox, { backgroundColor: '#eff6ff' }]}>
-              <FileText color="#3b82f6" size={18} />
-            </View>
-            <Text style={styles.actionText}>How to Use</Text>
-            <ChevronRight color="#cbd5e1" size={16} />
-          </TouchableOpacity>
+            <TouchableOpacity style={[styles.quickActionCard, { backgroundColor: '#ffc1d4' }]}>
+              <View style={styles.quickActionImageContainer}>
+                 <Image source={require('../../assets/home_help.jpg')} style={styles.quickActionImage} resizeMode="contain" />
+              </View>
+              <View style={styles.quickActionFooter}>
+                <Text style={styles.quickActionText}>Help & Support</Text>
+                <Text style={styles.quickActionArrow}>{'>'}</Text>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
 
-          <TouchableOpacity style={styles.actionBtn}>
-            <View style={[styles.actionIconBox, { backgroundColor: '#f0fdf4' }]}>
-              <HelpCircle color="#22c55e" size={18} />
-            </View>
-            <Text style={styles.actionText}>Help & Support</Text>
-            <ChevronRight color="#cbd5e1" size={16} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionBtn}>
-            <View style={[styles.actionIconBox, { backgroundColor: '#faf5ff' }]}>
-              <PhoneCall color="#a855f7" size={18} />
-            </View>
-            <Text style={styles.actionText}>Contact Us</Text>
-            <ChevronRight color="#cbd5e1" size={16} />
-          </TouchableOpacity>
         </ScrollView>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff', // White header area
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingBottom: 15,
   },
   headerIconBtn: {
     padding: 8,
     position: 'relative',
   },
   headerTitle: {
-    color: '#0f172a',
-    fontSize: 18,
-    fontWeight: '800',
+    color: '#1e3a8a',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   badge: {
     position: 'absolute',
@@ -196,8 +215,6 @@ const styles = StyleSheet.create({
     height: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#003399',
   },
   badgeText: {
     color: '#ffffff',
@@ -205,286 +222,258 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   scrollContent: {
-    backgroundColor: '#f8fafc',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
+    paddingHorizontal: 20,
     paddingBottom: 80,
   },
   welcomeCard: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 16,
+    backgroundColor: '#3b82f6', // Will apply a gradient-like look with solid deep blue for now
+    borderRadius: 20,
     padding: 20,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    marginTop: 8,
+    marginBottom: 24,
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
   },
   welcomeTextContent: {
     flex: 1,
-    paddingRight: 16,
+    paddingRight: 10,
   },
   welcomeLabel: {
-    color: '#1e293b',
+    color: '#e0f2fe',
     fontSize: 14,
-    marginBottom: 4,
+    fontWeight: '500',
+    marginBottom: 2,
   },
   companyName: {
-    color: '#0f172a',
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  welcomeSubtext: {
-    color: '#475569',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  welcomeIllustration: {
-    width: 80,
-    height: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  clipboardIcon: {
-    width: 50,
-    height: 64,
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#bfdbfe',
-    alignItems: 'center',
-    paddingTop: 16,
-    position: 'relative',
-  },
-  clipboardClip: {
-    width: 24,
-    height: 8,
-    backgroundColor: '#3b82f6',
-    borderRadius: 4,
-    position: 'absolute',
-    top: -4,
-  },
-  clipboardLines: {
-    width: '60%',
-    gap: 6,
-  },
-  line: {
-    height: 2,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 1,
-  },
-  plusBadge: {
-    position: 'absolute',
-    bottom: -6,
-    right: -6,
-    width: 24,
-    height: 24,
-    backgroundColor: '#0ea5e9',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#eff6ff',
-  },
-  createBtn: {
-    backgroundColor: '#0ea5e9',
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    marginBottom: 20,
-  },
-  createBtnText: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  statCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  statIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statTitle: {
-    color: '#475569',
-    fontSize: 12,
-    marginBottom: 6,
-  },
-  statCount: {
-    color: '#0f172a',
     fontSize: 22,
     fontWeight: '800',
-    marginBottom: 10,
+    marginBottom: 4,
   },
-  viewAllRow: {
+  dateText: {
+    color: '#bae6fd',
+    fontSize: 12,
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  welcomeSubtextBold: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  welcomeSubtext: {
+    color: '#e0f2fe',
+    fontSize: 9,
+    lineHeight: 14,
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    overflow: 'hidden',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+  },
+  tabsContainer: {
     flexDirection: 'row',
+    marginBottom: 20,
+    paddingHorizontal: 5,
+  },
+  tabBtn: {
+    marginRight: 24,
     alignItems: 'center',
   },
-  viewAllText: {
-    color: '#0ea5e9',
-    fontSize: 12,
+  tabText: {
+    fontSize: 18,
     fontWeight: '600',
-    marginRight: 2,
+    color: '#94a3b8',
+    marginBottom: 4,
+  },
+  tabTextActive: {
+    color: '#1e3a8a',
+    fontWeight: '800',
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ef4444',
+  },
+  cardsScrollContainer: {
+    flexDirection: 'row',
+    marginBottom: 30,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
+  },
+  createCard: {
+    width: 170,
+    height: 220,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  createIconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#27347a', 
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statCard: {
+    width: 170,
+    height: 220,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginRight: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  statImageContainer: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statImage: {
+    width: '100%',
+    height: '100%',
+  },
+  statBottomContent: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  statNumber: {
+    fontSize: 38,
+    fontWeight: '800',
+    color: '#27347a',
+    marginBottom: 4,
+  },
+  viewAllTextSmall: {
+    fontSize: 12,
+    color: '#64748b',
+    alignSelf: 'flex-end',
+    fontWeight: '500',
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
+    paddingHorizontal: 5,
   },
   sectionTitle: {
-    color: '#0f172a',
-    fontSize: 16,
-    fontWeight: '800',
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '700',
   },
   sectionLink: {
-    color: '#0ea5e9',
-    fontSize: 13,
+    color: '#1e3a8a',
+    fontSize: 14,
     fontWeight: '600',
   },
-  recentList: {
-    backgroundColor: '#ffffff',
+  emptyRecentBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', 
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  recentItem: {
-    flexDirection: 'row',
+    padding: 30,
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  recentIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
-  recentContent: {
-    flex: 1,
-  },
-  recentId: {
-    color: '#0f172a',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  recentDetails: {
-    color: '#64748b',
-    fontSize: 12,
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusSubmitted: {
-    backgroundColor: '#eff6ff',
-  },
-  statusDraft: {
-    backgroundColor: '#f0fdf4',
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  statusTextSubmitted: {
-    color: '#3b82f6',
-  },
-  statusTextDraft: {
-    color: '#22c55e',
+  emptyRecentText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '500',
   },
   infoBox: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  infoText: {
-    flex: 1,
-    color: '#475569',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  quickActionsContainer: {
-    gap: 12,
-    paddingBottom: 8,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 12,
-    paddingRight: 16,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    marginRight: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  actionIconBox: {
-    width: 32,
-    height: 32,
+    backgroundColor: '#d8b4c0', // A mauve/dusty pink color matching screenshot 6
     borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginBottom: 30,
+    marginHorizontal: 20,
+  },
+  infoIconCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
-  actionText: {
-    color: '#0f172a',
-    fontSize: 13,
-    fontWeight: '700',
-    marginRight: 8,
+  infoText: {
+    flex: 1,
+    color: '#000000',
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '500',
   },
-  emptyRecentBox: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    padding: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
+  quickActionsContainer: {
+    flexDirection: 'row',
     marginBottom: 20,
+    paddingHorizontal: 5,
   },
-  emptyRecentText: {
-    color: '#64748b',
+  quickActionCard: {
+    width: 200,
+    height: 140,
+    borderRadius: 16,
+    marginRight: 16,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+  },
+  quickActionImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 10,
+  },
+  quickActionImage: {
+    width: '80%',
+    height: '80%',
+  },
+  quickActionFooter: {
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  quickActionText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#000000',
+  },
+  quickActionArrow: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748b',
   }
 });

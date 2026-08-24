@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, SafeAreaView } from 'react-native';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react-native';
 import { apiRequest } from '../api';
 
@@ -28,7 +28,9 @@ export default function ForgotPasswordScreen({ onNavigateLogin }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/splash_bg.png')} style={styles.background} resizeMode="cover">
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
       <TouchableOpacity onPress={onNavigateLogin} style={styles.backBtn}>
         <ArrowLeft size={20} color="#0ea5e9" />
         <Text style={styles.backText}>Back to Login</Text>
@@ -75,13 +77,22 @@ export default function ForgotPasswordScreen({ onNavigateLogin }) {
         </TouchableOpacity>
       </View>
     </View>
+    </SafeAreaView>
+  </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     paddingHorizontal: 24,
     justifyContent: 'center',
   },

@@ -11,6 +11,7 @@ import { FavoriteProvider } from './src/context/FavoriteContext';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 
 import HomeScreen from './src/screens/HomeScreen';
 import ProductScreen from './src/screens/ProductScreen';

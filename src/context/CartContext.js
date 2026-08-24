@@ -59,7 +59,8 @@ export const CartProvider = ({ children }) => {
             quantity: quantity,
             size: finalSize,
             productCode: matchedSizeKey ? (product.sizeProductCodes[matchedSizeKey] || '') : '',
-            packing: matchedPackKey ? (product.packSizes[matchedPackKey] || '') : (product.packing || product.packSize || '')
+            packing: matchedPackKey ? (product.packSizes[matchedPackKey] || '') : (product.packing || product.packSize || ''),
+            uom: product.uom || 'Nos'
           }
         ];
       }

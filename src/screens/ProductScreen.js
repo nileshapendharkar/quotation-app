@@ -1,16 +1,30 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ScrollView, Image, Modal, BackHandler } from 'react-native';
-import { Menu, Search, Filter, Shield, Plus, Minus, X, Check } from 'lucide-react-native';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ScrollView, Image, Modal, BackHandler, ImageBackground, SafeAreaView, Dimensions } from 'react-native';
+import { Menu, Search, Filter, Shield, Plus, Minus, X, Check, Bell } from 'lucide-react-native';
 import ProductCard from '../components/ProductCard';
 import { apiRequest, getImageUrl } from '../api';
 import { CartContext } from '../context/CartContext';
 
-export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
+const { width } = Dimensions.get('window');
+
+export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateNotifications }) {
   const { addToCart } = useContext(CartContext);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [successMsg, setSuccessMsg] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [activeBanner, setActiveBanner] = useState(0);
+
+  const unreadNotifications = 0;
+
+  const banners = [
+    require('../../assets/banner1.jpg'),
+    require('../../assets/banner2.jpg'),
+    require('../../assets/banner3.jpg'),
+    require('../../assets/banner4.jpg'),
+    require('../../assets/banner5.jpg')
+  ];
 
   const [categories, setCategories] = useState([
     { id: '', name: 'All Groups', image: null },
@@ -53,6 +67,11 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
         setSelectedProduct(null);
         return true;
       }
+      if (showSearch) {
+        setShowSearch(false);
+        setSearch('');
+        return true;
+      }
       if (selectedSubCat) {
         setSelectedSubCat('');
         return true;
@@ -65,7 +84,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => backHandler.remove();
-  }, [selectedProduct, selectedSubCat, selectedCat]);
+  }, [selectedProduct, selectedSubCat, selectedCat, showSearch]);
 
   const fetchBackendSubCategories = async () => {
     const res = await apiRequest('/subcategories');
@@ -103,6 +122,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
   const handleSelectCategory = (catId) => {
     setSelectedCat(catId);
     setSelectedSubCat('');
+    setShowSearch(false);
   };
 
   const handleSelectSubCategory = (subCatId) => {
@@ -121,7 +141,6 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
 
   const handleConfirmAddToCart = () => {
     if (!selectedProduct) return;
-    // If product has sizes but none selected, alert user
     if (selectedProduct.sizes && selectedProduct.sizes.length > 0 && !selectedSize) {
       alert('Please select a size before adding to cart.');
       return;
@@ -134,158 +153,135 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
     }, 1200);
   };
 
+  const handleBannerScroll = (event) => {
+    const slide = Math.ceil(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width - 0.1);
+    if (slide !== activeBanner) {
+      setActiveBanner(slide);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.topHeader}>
-        <TouchableOpacity onPress={onOpenMenu} style={styles.menuBtn}>
-          <Menu size={22} color="#0f172a" />
-        </TouchableOpacity>
-
-        <View style={styles.titleBox}>
-          <Text style={styles.headerTitle}>Gouri Aqua Plast</Text>
-          <Text style={styles.headerSub}>Tanks, Pipes & Fittings Catalog</Text>
+    <ImageBackground
+      source={require('../../assets/splash_bg.png')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Top Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onOpenMenu} style={styles.headerIconBtn}>
+            <Menu color="#27347a" size={28} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>CATALOG</Text>
+          <View style={styles.headerRight}>
+             <TouchableOpacity style={styles.headerIconBtn} onPress={() => setShowSearch(!showSearch)}>
+               <Search color="#27347a" size={24} />
+             </TouchableOpacity>
+             <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>
+               <Bell color="#27347a" size={24} />
+               {unreadNotifications > 0 && (
+                 <View style={styles.badge}>
+                   <Text style={styles.badgeText}>{unreadNotifications}</Text>
+                 </View>
+               )}
+             </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.policyBadge}>
-          <Shield size={14} color="#0ea5e9" />
-        </View>
-      </View>
+        {showSearch && (
+          <View style={styles.searchSection}>
+            <View style={styles.searchContainer}>
+              <Search size={18} color="#64748b" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search product name or model..."
+                placeholderTextColor="#64748b"
+                value={search}
+                onChangeText={setSearch}
+                autoFocus
+              />
+              {search.length > 0 && (
+                <TouchableOpacity onPress={() => setSearch('')}>
+                  <X size={18} color="#64748b" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
 
-      {/* Search Bar */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchContainer}>
-          <Search size={18} color="#64748b" style={{ marginRight: 8 }} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search product name or model..."
-            placeholderTextColor="#64748b"
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
-      </View>
-
-      {/* Main Content Area */}
-      {(!selectedCat && !search) ? (
-        <FlatList
-          data={categories.filter(c => c.id !== '')}
-          keyExtractor={(item, index) => item.id || `cat_${index}`}
-          numColumns={2}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.groupCard} activeOpacity={0.8} onPress={() => handleSelectCategory(item.id)}>
-              <View style={styles.groupImageContainer}>
-                {item.image ? (
-                  <Image source={getImageUrl(item.image)} style={styles.groupImage} resizeMode="contain" />
-                ) : (
-                  <View style={styles.groupImagePlaceholder} />
-                )}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          
+          {(!selectedCat && !search && !showSearch) && (
+            <React.Fragment>
+              {/* Banner Slider */}
+              <View style={styles.bannerWrapper}>
+                <ScrollView 
+                  horizontal 
+                  pagingEnabled 
+                  showsHorizontalScrollIndicator={false} 
+                  onScroll={handleBannerScroll}
+                  scrollEventThrottle={16}
+                >
+                  {banners.map((img, idx) => (
+                    <Image key={idx} source={img} style={styles.bannerImage} resizeMode="cover" />
+                  ))}
+                </ScrollView>
+                <View style={styles.carouselDots}>
+                  {banners.map((_, idx) => (
+                    <View key={idx} style={[styles.dot, activeBanner === idx && styles.activeDot]} />
+                  ))}
+                </View>
               </View>
-              <View style={styles.groupTextContainer}>
-                <Text style={styles.groupName} numberOfLines={2}>{item.name}</Text>
+
+
+              
+              {/* 3x3 Grid Categories */}
+              <View style={styles.categoriesSection}>
+                <Text style={styles.sectionTitle}>Categories</Text>
+                <View style={styles.categoriesGrid}>
+                  {categories.filter(c => c.id !== '').map((item, index) => (
+                    <TouchableOpacity key={item.id} style={styles.categoryCard} onPress={() => handleSelectCategory(item.id)}>
+                      <View style={styles.categoryImageWrapper}>
+                        {item.image ? (
+                          <Image source={getImageUrl(item.image)} style={styles.categoryImage} resizeMode="contain" />
+                        ) : (
+                          <View style={styles.categoryImagePlaceholder} />
+                        )}
+                      </View>
+                      <View style={styles.categoryTextWrapper}>
+                        <Text style={styles.categoryText} numberOfLines={2}>{item.name}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </TouchableOpacity>
+              
+              {/* Added to populate the lower half gracefully */}
+              <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+                <Text style={styles.sectionTitle}>All Products</Text>
+              </View>
+            </React.Fragment>
           )}
-          contentContainerStyle={styles.gridContent}
-        />
-      ) : showSubCategories ? (
-        <React.Fragment>
-          {/* Category Slider for easy navigation back */}
-          <View style={styles.categorySection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-              {categories.map((cat, index) => {
-                const isSelected = selectedCat === cat.id;
-                return (
-                  <TouchableOpacity
-                    key={cat.id || `chip_${index}`}
-                    style={[styles.catChip, isSelected && styles.catChipActive]}
-                    onPress={() => handleSelectCategory(cat.id)}
-                  >
-                    {cat.image ? (
-                      <Image source={getImageUrl(cat.image)} style={styles.catChipImg} resizeMode="contain" />
-                    ) : null}
-                    <Text style={[styles.catChipText, isSelected && styles.catChipTextActive]}>
-                      {cat.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
 
-          <View style={styles.sectionHeaderBox}>
-            <Text style={styles.sectionHeaderText}>Select Sub Category</Text>
-          </View>
-
-          <FlatList
-            data={currentSubCats}
-            keyExtractor={(item, index) => item.id || `subcat_${index}`}
-            numColumns={2}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.groupCard} activeOpacity={0.8} onPress={() => handleSelectSubCategory(item.id)}>
-                <View style={styles.groupImageContainer}>
-                  {item.image ? (
-                    <Image source={getImageUrl(item.image)} style={styles.groupImage} resizeMode="contain" />
-                  ) : (
-                    <View style={styles.groupImagePlaceholder} />
-                  )}
-                </View>
-                <View style={styles.groupTextContainer}>
-                  <Text style={styles.groupName} numberOfLines={2}>{item.name}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.gridContent}
-          />
-        </React.Fragment>
-      ) : (
-        <React.Fragment>
-          {/* Category Slider */}
-          <View style={styles.categorySection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-              {categories.map((cat, index) => {
-                const isSelected = selectedCat === cat.id;
-                return (
-                  <TouchableOpacity
-                    key={cat.id || `chip_${index}`}
-                    style={[styles.catChip, isSelected && styles.catChipActive]}
-                    onPress={() => handleSelectCategory(cat.id)}
-                  >
-                    {cat.image ? (
-                      <Image source={getImageUrl(cat.image)} style={styles.catChipImg} resizeMode="contain" />
-                    ) : null}
-                    <Text style={[styles.catChipText, isSelected && styles.catChipTextActive]}>
-                      {cat.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-
-          {/* Optional: Sub Category Slider if subcategories exist and one is selected */}
-          {selectedCat && currentSubCats.length > 0 && !search && (
+          {/* Subcategory Chips if a category is selected */}
+          {selectedCat && !search && (
             <View style={styles.subCategorySection}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScroll}>
                 <TouchableOpacity
                   style={[styles.catChip, !selectedSubCat && styles.catChipActive]}
                   onPress={() => setSelectedSubCat('')}
                 >
-                  <Text style={[styles.catChipText, !selectedSubCat && styles.catChipTextActive]}>
-                    All
-                  </Text>
+                  <Text style={[styles.catChipText, !selectedSubCat && styles.catChipTextActive]}>All</Text>
                 </TouchableOpacity>
                 {currentSubCats.map((sub, index) => {
                   const isSelSub = selectedSubCat === sub.id;
                   return (
                     <TouchableOpacity
-                      key={sub.id || `subchip_${index}`}
+                      key={sub.id}
                       style={[styles.catChip, isSelSub && styles.catChipActive]}
                       onPress={() => handleSelectSubCategory(sub.id)}
                     >
-                      <Text style={[styles.catChipText, isSelSub && styles.catChipTextActive]}>
-                        {sub.name}
-                      </Text>
+                      <Text style={[styles.catChipText, isSelSub && styles.catChipTextActive]}>{sub.name}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -293,25 +289,29 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
             </View>
           )}
 
-          {/* Products Grid (2 per row) */}
-          <FlatList
-            data={filteredProducts}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            renderItem={({ item }) => (
-              <ProductCard product={item} onSelect={handleOpenProductDetail} />
-            )}
-            contentContainerStyle={styles.gridContent}
-            ListEmptyComponent={
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyText}>No matching quotation products found.</Text>
-              </View>
-            }
-          />
-        </React.Fragment>
-      )}
+          {/* Products Grid (if category is selected or search is active, or default 'All Products' below banners) */}
+          {(selectedCat || search || showSearch || (!selectedCat && !search && !showSearch)) && (
+            <View style={styles.gridContainer}>
+              {filteredProducts.length === 0 ? (
+                <View style={styles.emptyBox}>
+                  <Text style={styles.emptyText}>No matching quotation products found.</Text>
+                </View>
+              ) : (
+                <View style={styles.productsGrid}>
+                  {filteredProducts.map(item => (
+                    <View key={item.id} style={styles.gridItemWrapper}>
+                      <ProductCard product={item} onSelect={handleOpenProductDetail} />
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
 
-      {/* Product Detail & size selection modal */}
+        </ScrollView>
+      </SafeAreaView>
+
+      {/* Product Detail Modal */}
       <Modal
         visible={!!selectedProduct}
         animationType="fade"
@@ -326,7 +326,6 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
           <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
             {selectedProduct && (
               <View style={{ width: '100%' }}>
-                {/* Header */}
                 <View style={styles.modalHeader}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.modalProductTitle} numberOfLines={1}>
@@ -344,11 +343,9 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
                   </TouchableOpacity>
                 </View>
 
-                {/* Content */}
                 <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
                   <Image source={getImageUrl(selectedProduct.image)} style={styles.modalImage} resizeMode="contain" />
 
-                  {/* ── SIZE SELECTION (prominent, top position) ── */}
                   {selectedProduct.sizes && selectedProduct.sizes.length > 0 && (
                     <View style={styles.sizesSection}>
                       <Text style={styles.sizeSelectionLabel}>Select Size <Text style={{ color: '#ef4444' }}>*</Text></Text>
@@ -371,38 +368,36 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
                     </View>
                   )}
 
-                  {/* Product Details Block */}
-                  <View style={{ backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 16 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1e293b', marginBottom: 8 }}>Product Details</Text>
-
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-                      <Text style={{ fontSize: 12, color: '#64748b' }}>Product Category</Text>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: '#0f172a' }}>{selectedProduct.categoryName || 'N/A'}</Text>
+                  <View style={styles.detailsBlock}>
+                    <Text style={styles.detailsBlockTitle}>Product Details</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Product Category</Text>
+                      <Text style={styles.detailValue}>{selectedProduct.categoryName || 'N/A'}</Text>
                     </View>
-
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-                      <Text style={{ fontSize: 12, color: '#64748b' }}>Product Name</Text>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: '#0f172a', flex: 1, textAlign: 'right', marginLeft: 16 }} numberOfLines={1}>{selectedProduct.name}</Text>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Product Name</Text>
+                      <Text style={[styles.detailValue, { flex: 1, textAlign: 'right', marginLeft: 16 }]} numberOfLines={1}>{selectedProduct.name}</Text>
                     </View>
-
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Unit of Measure (UOM)</Text>
+                      <Text style={styles.detailValue}>{selectedProduct.uom || 'Nos'}</Text>
+                    </View>
                     {selectedSize ? (
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-                        <Text style={{ fontSize: 12, color: '#64748b' }}>Selected Size</Text>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#0ea5e9' }}>{selectedSize}</Text>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Selected Size</Text>
+                        <Text style={[styles.detailValue, { color: '#0ea5e9' }]}>{selectedSize}</Text>
                       </View>
                     ) : null}
-
                     {selectedProduct.sizeProductCodes && selectedProduct.sizeProductCodes[selectedSize] ? (
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
-                        <Text style={{ fontSize: 12, color: '#64748b' }}>Product Code</Text>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#0ea5e9' }}>{selectedProduct.sizeProductCodes[selectedSize]}</Text>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Product Code</Text>
+                        <Text style={[styles.detailValue, { color: '#0ea5e9' }]}>{selectedProduct.sizeProductCodes[selectedSize]}</Text>
                       </View>
                     ) : null}
-
                     {(selectedProduct.packSizes && selectedProduct.packSizes[selectedSize]) || selectedProduct.packSize ? (
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-                        <Text style={{ fontSize: 12, color: '#64748b' }}>Packing</Text>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#10b981' }}>
+                      <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                        <Text style={styles.detailLabel}>Packing</Text>
+                        <Text style={[styles.detailValue, { color: '#10b981' }]}>
                           {selectedProduct.packSizes && selectedProduct.packSizes[selectedSize] ? `${selectedProduct.packSizes[selectedSize]} Units / Pack` : `${selectedProduct.packSize} Units / Pack`}
                         </Text>
                       </View>
@@ -414,58 +409,40 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
                     {selectedProduct.description || 'No description available for this item.'}
                   </Text>
 
-                  {(selectedProduct.details) && (
-                    <>
+                  {selectedProduct.details && (
+                    <React.Fragment>
                       <Text style={styles.modalSectionTitle}>Details</Text>
                       <Text style={styles.modalDescription}>{selectedProduct.details}</Text>
-                    </>
+                    </React.Fragment>
                   )}
 
-                  {(selectedProduct.specification) && (
-                    <>
+                  {selectedProduct.specification && (
+                    <React.Fragment>
                       <Text style={styles.modalSectionTitle}>Specifications</Text>
                       <Text style={styles.modalDescription}>{selectedProduct.specification}</Text>
-                    </>
+                    </React.Fragment>
                   )}
 
-                  {/* Quantity Counter */}
                   <View style={styles.qtySection}>
                     <Text style={styles.modalSectionTitle}>Configure Quantity</Text>
                     <View style={styles.stepperContainer}>
-                      <TouchableOpacity
-                        style={styles.stepperBtn}
-                        onPress={() => !successMsg && setQty(prev => Math.max(1, prev - 10))}
-                      >
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => Math.max(1, prev - 10))}>
                         <Text style={styles.stepperBtnTxt}>-10</Text>
                       </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        style={styles.stepperBtn}
-                        onPress={() => !successMsg && setQty(prev => Math.max(1, prev - 1))}
-                      >
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => Math.max(1, prev - 1))}>
                         <Minus size={14} color="#0f172a" />
                       </TouchableOpacity>
-
                       <Text style={styles.stepperValue}>{qty}</Text>
-
-                      <TouchableOpacity
-                        style={styles.stepperBtn}
-                        onPress={() => !successMsg && setQty(prev => prev + 1)}
-                      >
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => prev + 1)}>
                         <Plus size={14} color="#0f172a" />
                       </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={styles.stepperBtn}
-                        onPress={() => !successMsg && setQty(prev => prev + 10)}
-                      >
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => prev + 10)}>
                         <Text style={styles.stepperBtnTxt}>+10</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 </ScrollView>
 
-                {/* Footer Add Button */}
                 <View style={styles.modalFooter}>
                   {successMsg ? (
                     <View style={styles.successMessageBtn}>
@@ -473,10 +450,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
                       <Text style={styles.successMessageText}>Added to Quote Cart!</Text>
                     </View>
                   ) : (
-                    <TouchableOpacity 
-                      style={styles.confirmAddBtn} 
-                      onPress={handleConfirmAddToCart}
-                    >
+                    <TouchableOpacity style={styles.confirmAddBtn} onPress={handleConfirmAddToCart}>
                       <Text style={styles.confirmAddBtnText}>Add to Quote Cart</Text>
                     </TouchableOpacity>
                   )}
@@ -486,53 +460,60 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct }) {
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    width: '100%',
+    height: '100%',
   },
-  topHeader: {
+  safeArea: {
+    flex: 1,
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 45,
-    paddingBottom: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 15,
   },
-  menuBtn: {
+  headerIconBtn: {
     padding: 8,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
-  },
-  titleBox: {
-    alignItems: 'center',
+    position: 'relative',
   },
   headerTitle: {
-    color: '#0f172a',
-    fontSize: 16,
-    fontWeight: '800',
+    color: '#27347a',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
-  headerSub: {
-    color: '#0ea5e9',
-    fontSize: 11,
-    fontWeight: '600',
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  policyBadge: {
-    padding: 8,
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 6,
+    backgroundColor: '#ef4444',
     borderRadius: 10,
-    backgroundColor: 'rgba(14, 165, 233, 0.12)',
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: 'bold',
   },
   searchSection: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -542,52 +523,155 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderRadius: 12,
     paddingHorizontal: 14,
-    height: 44,
+    height: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   searchInput: {
     flex: 1,
     color: '#0f172a',
-    fontSize: 13,
+    fontSize: 14,
   },
-  categorySection: {
-    marginBottom: 8,
+  scrollContent: {
+    paddingBottom: 100,
   },
-  categoryScroll: {
+  bannerWrapper: {
+    width: '100%',
+    height: 300,
+    marginBottom: 20,
+    position: 'relative',
+  },
+  bannerImage: {
+    width: width,
+    height: '100%',
+  },
+  carouselDots: {
+    position: 'absolute',
+    bottom: -15,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(39, 52, 122, 0.3)',
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: '#27347a',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  categoriesSection: {
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#000000',
+    marginLeft: 20,
+    marginBottom: 16,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: 16,
+    justifyContent: 'flex-start',
+  },
+  categoryCard: {
+    width: (width - 32 - 16) / 3, // 3 columns with 8 gap: (100% - padding - gaps) / 3
+    height: 145,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+    justifyContent: 'space-between',
+  },
+  categoryImageWrapper: {
+    flex: 1,
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  categoryImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 6,
+  },
+  categoryTextWrapper: {
+    backgroundColor: '#e0f2fe',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 46,
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0f172a',
+    textAlign: 'center',
+  },
+  subCategorySection: {
+    paddingTop: 10,
+    marginBottom: 16,
+  },
+  chipScroll: {
+    paddingHorizontal: 20,
     gap: 8,
   },
   catChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  catChipImg: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-    borderRadius: 4,
-  },
   catChipActive: {
-    backgroundColor: 'rgba(14, 165, 233, 0.15)',
-    borderColor: '#0ea5e9',
+    backgroundColor: 'rgba(39, 52, 122, 0.1)',
+    borderColor: '#27347a',
   },
   catChipText: {
     color: '#64748b',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   catChipTextActive: {
-    color: '#0ea5e9',
+    color: '#27347a',
     fontWeight: '800',
   },
-  gridContent: {
+  gridContainer: {
     paddingHorizontal: 10,
-    paddingBottom: 80,
+  },
+  productsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  gridItemWrapper: {
+    width: '50%',
+    padding: 6,
   },
   emptyBox: {
     padding: 40,
@@ -595,60 +679,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: '#64748b',
-    fontSize: 13,
-  },
-  groupCard: {
-    flex: 1,
-    margin: 6,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    alignItems: 'center',
-  },
-  sectionHeaderBox: {
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 8,
-  },
-  sectionHeaderText: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  subCategorySection: {
-    marginBottom: 8,
-    marginTop: -4,
-  },
-  groupImageContainer: {
-    width: '100%',
-    height: 120,
-    backgroundColor: '#f1f5f9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-  },
-  groupImage: {
-    width: '100%',
-    height: '100%',
-  },
-  groupImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e2e8f0',
-  },
-  groupTextContainer: {
-    width: '100%',
-    padding: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  groupName: {
-    color: '#0f172a',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
@@ -680,7 +712,7 @@ const styles = StyleSheet.create({
   },
   modalProductTitle: {
     fontSize: 16,
-    fontWeight: '805',
+    fontWeight: '800',
     color: '#0f172a',
   },
   modalCategoryTitle: {
@@ -690,12 +722,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   closeModalBtn: {
-    padding: 4,
+    padding: 6,
     borderRadius: 8,
     backgroundColor: '#f1f5f9',
   },
   modalScroll: {
     maxHeight: 460,
+  },
+  modalImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    marginBottom: 16,
+  },
+  sizesSection: {
+    marginBottom: 16,
   },
   sizeSelectionLabel: {
     fontSize: 14,
@@ -703,12 +745,61 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     marginBottom: 10,
   },
-  modalImage: {
-    width: '100%',
-    height: 160,
-    borderRadius: 12,
+  sizeChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sizeSelectorChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
+  },
+  sizeSelectorChipActive: {
+    borderColor: '#0ea5e9',
+    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+  },
+  sizeSelectorChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  sizeSelectorChipTextActive: {
+    color: '#0ea5e9',
+    fontWeight: '800',
+  },
+  detailsBlock: {
     backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     marginBottom: 16,
+  },
+  detailsBlockTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  detailValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0f172a',
   },
   modalSectionTitle: {
     fontSize: 13,
@@ -721,35 +812,6 @@ const styles = StyleSheet.create({
     color: '#64748b',
     lineHeight: 18,
     marginBottom: 16,
-  },
-  sizesSection: {
-    marginBottom: 16,
-  },
-  sizeChipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  sizeSelectorChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#ffffff',
-  },
-  sizeSelectorChipActive: {
-    borderColor: '#0ea5e9',
-    backgroundColor: 'rgba(14, 165, 233, 0.1)',
-  },
-  sizeSelectorChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  sizeSelectorChipTextActive: {
-    color: '#0ea5e9',
-    fontWeight: '800',
   },
   qtySection: {
     marginBottom: 12,
@@ -789,7 +851,7 @@ const styles = StyleSheet.create({
   },
   confirmAddBtn: {
     width: '100%',
-    height: 46,
+    height: 48,
     backgroundColor: '#0ea5e9',
     borderRadius: 12,
     alignItems: 'center',
@@ -802,7 +864,7 @@ const styles = StyleSheet.create({
   },
   successMessageBtn: {
     width: '100%',
-    height: 46,
+    height: 48,
     backgroundColor: '#10b981',
     borderRadius: 12,
     flexDirection: 'row',
@@ -812,6 +874,6 @@ const styles = StyleSheet.create({
   successMessageText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: '850',
+    fontWeight: '800',
   },
 });

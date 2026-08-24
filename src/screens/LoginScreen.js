@@ -1,128 +1,201 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { ShieldCheck, Phone, Lock, ArrowRight } from 'lucide-react-native';
+import React, { useState, useContext, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, Image, SafeAreaView, Dimensions } from 'react-native';
+import { Smartphone, ChevronDown } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
+const { width, height } = Dimensions.get('window');
+
 export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
-  const { login } = useContext(AuthContext);
-  const [userId, setUserId] = useState('');
-  const [password, setPassword] = useState('');
+  const { login, sendOtp: loginContextSendOtp } = useContext(AuthContext);
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [step, setStep] = useState(1); // 1 = Phone input, 2 = OTP input
+  const [otpToken, setOtpToken] = useState(null);
 
-  const handleLogin = async () => {
+  const otpRefs = useRef([]);
+
+  const handleSendOTP = async () => {
     setError('');
-    if (!userId || !password) {
-      setError('Please enter your Mobile Number / User ID and Password');
+    if (!phone) {
+      setError('Please enter your phone number');
       return;
     }
     setLoading(true);
-    const res = await login(userId, password);
+    const res = await login.sendOtp ? await login.sendOtp(phone) : await loginContextSendOtp(phone);
+    setLoading(false);
+
+    if (res.success) {
+      setOtpToken(res.otpToken);
+      setOtp('');
+      setStep(2);
+      // In production, we don't alert the OTP. For dev testing:
+      if (res.mockOtp) console.log('Mock OTP:', res.mockOtp);
+    } else {
+      setError(res.message);
+    }
+  };
+
+  const handleLogin = async () => {
+    setError('');
+    if (!phone || otp.length === 0) {
+      setError('Please enter your complete OTP / Password');
+      return;
+    }
+    setLoading(true);
+    // Pass phone as userId, otp as password, and otpToken
+    const res = await login(phone, otp, otpToken);
     setLoading(false);
     if (!res.success) {
       setError(res.message);
     }
   };
 
+  const handleOtpChange = (val, index) => {
+    let newOtp = otp.split('');
+    newOtp[index] = val;
+    setOtp(newOtp.join(''));
+
+    if (val && index < 5) {
+      otpRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleOtpKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1].focus();
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.brandBox}>
-        <View style={styles.logo}>
-          <ShieldCheck size={32} color="#000" />
-        </View>
-        <Text style={styles.brandTitle}>Gouri Aqua Plast</Text>
-        <Text style={styles.brandSubtitle}>Ganesh Gouri Industries • Mobile Quotation Engine</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <ImageBackground
+        source={require('../../assets/splash_bg.png')}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.container}>
+          {/* Logo Section */}
+          <View style={styles.brandBox}>
+            <Image
+              source={require('../../assets/splash_logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandTitle}>Login</Text>
+          </View>
 
-      {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
+          {error ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
 
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Phone size={18} color="#0ea5e9" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Mobile Number / User ID"
-            placeholderTextColor="#64748b"
-            value={userId}
-            onChangeText={setUserId}
-            autoCapitalize="none"
-            keyboardType="phone-pad"
-          />
-        </View>
+          {/* Form Section */}
+          <View style={styles.form}>
+            {step === 1 ? (
+              <View>
+                <Text style={styles.inputLabel}>Phone Number:</Text>
+                <View style={styles.inputContainer}>
+                  <Smartphone size={22} color="#000" style={styles.icon} />
+                  <View style={styles.countryCodeContainer}>
+                    <Text style={styles.countryCodeText}>+91</Text>
+                    <ChevronDown size={14} color="#000" />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="98765 43210"
+                    placeholderTextColor="#94a3b8"
+                    value={phone}
+                    onChangeText={setPhone}
+                    autoCapitalize="none"
+                    keyboardType="phone-pad"
+                  />
+                </View>
+                <TouchableOpacity style={styles.submitBtn} onPress={handleSendOTP} disabled={loading}>
+                  <Text style={styles.submitText}>Send OTP</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View>
+                <Text style={styles.otpLabelTop}>OTP Send to</Text>
+                <View style={styles.otpPhoneRow}>
+                  <Text style={styles.otpPhoneText}>+91 {phone || '98765 43210'}</Text>
+                  <TouchableOpacity onPress={() => setStep(1)}>
+                    <Text style={styles.editNumberText}>Edit Number</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.otpBoxesContainer}>
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <TextInput
+                      key={index}
+                      ref={(ref) => (otpRefs.current[index] = ref)}
+                      style={styles.otpBox}
+                      placeholder="0"
+                      placeholderTextColor="#f1f5f9"
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      secureTextEntry={false}
+                      value={otp[index] || ''}
+                      onChangeText={(val) => handleOtpChange(val, index)}
+                      onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                    />
+                  ))}
+                </View>
 
-        <View style={styles.inputContainer}>
-          <Lock size={18} color="#0ea5e9" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#64748b"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+                <TouchableOpacity style={styles.submitBtn} onPress={handleLogin} disabled={loading}>
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitText}>Verify & Continue</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
-
-        <TouchableOpacity style={styles.submitBtn} onPress={handleLogin} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <React.Fragment>
-              <Text style={styles.submitText}>Sign In to App</Text>
-              <ArrowRight size={18} color="#ffffff" />
-            </React.Fragment>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            🔒 Authorized Access Only: Only credentials created by Admin are permitted to sign in.
-          </Text>
-        </View>
-      </View>
-    </View>
+      </ImageBackground>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
   brandBox: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
   },
   logo: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: '#0ea5e9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
+    width: 140,
+    height: 140,
+    marginBottom: 10,
   },
   brandTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  brandSubtitle: {
-    fontSize: 12,
-    color: '#0ea5e9',
-    marginTop: 4,
-    fontWeight: '600',
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 0.5,
   },
   errorBox: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
     padding: 12,
     borderRadius: 10,
-    marginBottom: 16,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: 'rgba(239, 68, 68, 0.3)',
   },
@@ -132,56 +205,109 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   form: {
-    gap: 16,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+    marginBottom: 10,
+    marginLeft: 5,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 50,
+    borderRadius: 30,
+    paddingHorizontal: 20,
+    height: 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+    marginBottom: 24,
   },
   icon: {
     marginRight: 10,
   },
+  countryCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  countryCodeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginRight: 4,
+  },
   input: {
     flex: 1,
-    color: '#0f172a',
-    fontSize: 14,
-    fontWeight: '600',
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '500',
   },
   submitBtn: {
-    backgroundColor: '#0ea5e9',
-    height: 50,
-    borderRadius: 12,
-    flexDirection: 'row',
+    backgroundColor: '#27347a',
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
+    shadowColor: '#27347a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   submitText: {
     color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  infoBox: {
-    marginTop: 20,
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: 'rgba(14, 165, 233, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(14, 165, 233, 0.2)',
-  },
-  infoText: {
-    color: '#0284c7',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
+    fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  otpLabelTop: {
+    fontSize: 13,
+    color: '#94a3b8',
+    marginBottom: 4,
+    marginLeft: 5,
+  },
+  otpPhoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    marginLeft: 5,
+  },
+  otpPhoneText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    marginRight: 12,
+  },
+  editNumberText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#27347a',
+  },
+  otpBoxesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+    paddingHorizontal: 2,
+  },
+  otpBox: {
+    width: 45,
+    height: 55,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#000000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   }
 });
-

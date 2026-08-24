@@ -1,19 +1,23 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Modal, Alert, Linking } from 'react-native';
-import { ShoppingBag, Plus, Minus, Trash2, FileCheck, X, Share2, Download } from 'lucide-react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Modal, Alert, Linking, ImageBackground, SafeAreaView } from 'react-native';
+import { ShoppingBag, Plus, Minus, Trash2, FileCheck, X, Share2, Download, Menu, Search, Bell, Bookmark, Lightbulb } from 'lucide-react-native';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
+import { FavoriteContext } from '../context/FavoriteContext';
 import { apiRequest, getImageUrl } from '../api';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
-export default function CartScreen({ onNavigateOrders }) {
+export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNotifications }) {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
+  const { isFavorite, toggleFavorite } = useContext(FavoriteContext);
 
   const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const [generatedOrder, setGeneratedOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const unreadNotifications = 0; // Grab from context if available
 
   const handleGenerateQuotation = async () => {
     if (cartItems.length === 0) return;
@@ -26,7 +30,8 @@ export default function CartScreen({ onNavigateOrders }) {
         quantity: i.quantity,
         size: i.size || '',
         productCode: i.productCode || '',
-        packing: i.packing || ''
+        packing: i.packing || '',
+        uom: i.uom || 'Nos'
       })),
       notes: "Generated via Mobile Quotation App"
     };
@@ -56,11 +61,24 @@ export default function CartScreen({ onNavigateOrders }) {
     }
   };
 
+  const handleMoveToSaved = (item) => {
+    const product = {
+      id: item.productId,
+      name: item.productName,
+      categoryName: item.categoryName,
+      image: item.image || null,
+    };
+    if (!isFavorite(product.id)) {
+      toggleFavorite(product);
+    }
+    removeFromCart(item.productId, item.size);
+  };
+
   const handleShareWhatsApp = async () => {
     if (!generatedOrder) return;
 
     const itemsText = generatedOrder.items
-      .map(item => `• ${item.productName}${item.size ? ` (Size: ${item.size})` : ''}${item.productCode ? ` [Code: ${item.productCode}]` : ''}${item.packing ? ` (Packing: ${item.packing})` : ''} (Qty: ${item.quantity})`)
+      .map(item => `• ${item.productName}${item.size ? ` (Size: ${item.size})` : ''}${item.productCode ? ` [Code: ${item.productCode}]` : ''}${item.packing ? ` (Packing: ${item.packing})` : ''} (Qty: ${item.quantity} ${item.uom || 'Nos'})`)
       .join('\n');
 
     const message = `*Gouri Aqua Plast - Product Quotation*\n` +
@@ -91,7 +109,7 @@ export default function CartScreen({ onNavigateOrders }) {
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.productName}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.size || '-'}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.packing || '-'}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${item.quantity} ${item.uom || 'Nos'}</td>
         </tr>
       `).join('');
 
@@ -162,292 +180,345 @@ export default function CartScreen({ onNavigateOrders }) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.topHeader}>
-        <Text style={styles.headerTitle}>Quotation Builder (Cart)</Text>
-        <Text style={styles.headerSub}>Select Product Quantities • Zero Price Policy</Text>
-      </View>
-
-      {cartItems.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <ShoppingBag size={48} color="#334155" />
-          <Text style={styles.emptyTitle}>Quotation Cart is Empty</Text>
-          <Text style={styles.emptySub}>Add products from catalog to request a quotation.</Text>
+    <ImageBackground source={require('../../assets/splash_bg.png')} style={styles.background} resizeMode="cover">
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onOpenMenu} style={styles.headerIconBtn}>
+            <Menu color="#27347a" size={28} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>CART</Text>
+          <View style={styles.headerRight}>
+             <TouchableOpacity style={styles.headerIconBtn}>
+               <Search color="#27347a" size={24} />
+             </TouchableOpacity>
+             <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>
+               <Bell color="#27347a" size={24} />
+               {unreadNotifications > 0 && (
+                 <View style={styles.badge}>
+                   <Text style={styles.badgeText}>{unreadNotifications}</Text>
+                 </View>
+               )}
+             </TouchableOpacity>
+          </View>
         </View>
-      ) : (
-        <View style={{ flex: 1 }}>
-          {/* Products Grid (2 per row) */}
-          <FlatList
-            data={cartItems}
-            keyExtractor={(item) => item.productId + '_' + (item.size || '')}
-            renderItem={({ item }) => (
-              <View style={styles.cartListItem}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.cardCategory} numberOfLines={1}>
-                    {item.categoryName} {item.subCategoryName ? `› ${item.subCategoryName}` : ''}
-                  </Text>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{item.productName}</Text>
+
+        {cartItems.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <ShoppingBag size={48} color="#27347a" />
+            <Text style={styles.emptyTitle}>Cart is Empty</Text>
+            <Text style={styles.emptySub}>Add products from catalog to request a quotation.</Text>
+          </View>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <FlatList
+              data={cartItems}
+              keyExtractor={(item) => item.productId + '_' + (item.size || '')}
+              renderItem={({ item }) => (
+                <View style={styles.cartListItem}>
                   
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                    {item.size ? (
-                      <View style={styles.sizeBadge}>
-                        <Text style={styles.sizeText}>Size: {item.size}</Text>
-                      </View>
-                    ) : null}
-
-                    {item.productCode ? (
-                      <View style={[styles.sizeBadge, { backgroundColor: 'rgba(16, 119, 255, 0.08)', borderColor: 'rgba(16, 119, 255, 0.15)' }]}>
-                        <Text style={[styles.sizeText, { color: '#1677ff' }]}>Code: {item.productCode}</Text>
-                      </View>
-                    ) : null}
-
-                    {item.packing ? (
-                      <View style={[styles.sizeBadge, { backgroundColor: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                        <Text style={[styles.sizeText, { color: '#10b981' }]}>Packing: {item.packing} Units/Pack</Text>
-                      </View>
-                    ) : null}
+                  {/* Left Column: Image + Remove */}
+                  <View style={styles.leftColumn}>
+                    <View style={styles.imageContainer}>
+                      <Image source={getImageUrl(item.image)} style={styles.itemImage} resizeMode="contain" />
+                    </View>
+                    <TouchableOpacity style={styles.removeBtn} onPress={() => removeFromCart(item.productId, item.size)}>
+                      <Trash2 size={12} color="#ffffff" />
+                      <Text style={styles.removeText}>Remove</Text>
+                    </TouchableOpacity>
                   </View>
+
+                  {/* Right Column: Details + Move to Saved */}
+                  <View style={styles.rightColumn}>
+                    <View style={styles.infoTop}>
+                      <Text style={styles.cardTitle} numberOfLines={2}>{item.productName}</Text>
+                      <Text style={styles.cardCategory} numberOfLines={1}>
+                        {item.categoryName} {item.subCategoryName ? `› ${item.subCategoryName}` : ''}
+                      </Text>
+                      
+                      <View style={styles.qtyContainer}>
+                        <TouchableOpacity style={styles.qtyBtn} onPress={() => updateQuantity(item.productId, -1, item.size)}>
+                          <Minus size={14} color="#000000" />
+                        </TouchableOpacity>
+                        <Text style={styles.qtyValue}>{item.quantity}</Text>
+                        <TouchableOpacity style={styles.qtyBtn} onPress={() => updateQuantity(item.productId, 1, item.size)}>
+                          <Plus size={14} color="#000000" />
+                        </TouchableOpacity>
+                      </View>
+
+                      {item.size ? (
+                        <View style={styles.sizeBadge}>
+                          <Text style={styles.sizeText}>Size: {item.size}</Text>
+                        </View>
+                      ) : null}
+                      <View style={[styles.sizeBadge, { marginTop: 4, backgroundColor: '#f1f5f9' }]}>
+                        <Text style={[styles.sizeText, { color: '#64748b' }]}>UOM: {item.uom || 'Nos'}</Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity style={styles.saveBtn} onPress={() => handleMoveToSaved(item)}>
+                      <Bookmark size={12} color="#ffffff" fill="#ffffff" />
+                      <Text style={styles.saveText}>Move to Saved</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                </View>
+              )}
+              contentContainerStyle={styles.listContent}
+            />
+
+            {/* Bottom Action Bar */}
+            <View style={styles.bottomBar}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={clearCart}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.generateBtn} onPress={handleGenerateQuotation} disabled={submitting}>
+                <Lightbulb size={20} color="#ffffff" />
+                <Text style={styles.generateText}>
+                  {submitting ? 'Generating...' : 'Generate Quotation'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Generated Quotation PDF Preview Modal (Retained functionality) */}
+        {pdfModalVisible && generatedOrder && (
+          <Modal visible={pdfModalVisible} animationType="slide" transparent>
+            <View style={styles.pdfOverlay}>
+              <View style={styles.pdfCard}>
+                <View style={styles.pdfHeader}>
+                  <View>
+                    <Text style={styles.pdfTitle}>PRODUCT QUOTATION PDF</Text>
+                    <Text style={styles.pdfRef}>{generatedOrder.orderNo}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setPdfModalVisible(false)}>
+                    <X size={20} color="#94a3b8" />
+                  </TouchableOpacity>
                 </View>
 
-                <View style={styles.itemControls}>
-                  {/* Quantity Stepper */}
-                  <View style={styles.qtyContainer}>
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() => updateQuantity(item.productId, -1, item.size)}
-                    >
-                      <Minus size={14} color="#334155" />
-                    </TouchableOpacity>
+                <View style={styles.customerBox}>
+                  <Text style={styles.custLabel}>CUSTOMER DETAILS</Text>
+                  <Text style={styles.custName}>{generatedOrder.userName}</Text>
+                  <Text style={styles.custSub}>{generatedOrder.userEmail} | {generatedOrder.userMobile}</Text>
+                  <Text style={styles.custSub}>{generatedOrder.companyName || 'Individual'}</Text>
+                </View>
 
-                    <Text style={styles.qtyValue}>{item.quantity}</Text>
+                <Text style={styles.sectionHeading}>QUOTATION ITEMS LIST (NO PRICING)</Text>
+                <View style={styles.pdfItemsList}>
+                  {generatedOrder.items.map((item, idx) => (
+                    <View key={idx} style={styles.pdfItemRow}>
+                      <View style={{ flex: 1, paddingRight: 8 }}>
+                        <Text style={styles.pdfItemName}>{item.productName}</Text>
+                        {(item.categoryName || item.subCategoryName) && (
+                          <Text style={styles.pdfItemCategory}>
+                            {item.categoryName} {item.subCategoryName ? `› ${item.subCategoryName}` : ''}
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={styles.pdfItemQty}>{item.quantity} {item.uom || 'Nos'}</Text>
+                    </View>
+                  ))}
+                </View>
 
-                    <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() => updateQuantity(item.productId, 1, item.size)}
-                    >
-                      <Plus size={14} color="#334155" />
-                    </TouchableOpacity>
-                  </View>
+                <View style={styles.disclaimerBox}>
+                  <Text style={styles.disclaimerText}>
+                    ✓ Quotation created successfully. Omitted price fields as per strict policy.
+                  </Text>
+                </View>
 
-                  {/* Delete Button */}
-                  <TouchableOpacity
-                    style={styles.deleteBtn}
-                    onPress={() => removeFromCart(item.productId, item.size)}
+                <View style={styles.pdfActions}>
+                  <TouchableOpacity style={styles.actionBtn} onPress={handleShareWhatsApp}>
+                    <Share2 size={16} color="#0ea5e9" />
+                    <Text style={styles.actionText}>WhatsApp</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionBtn} onPress={handleDownloadPDF}>
+                    <Download size={16} color="#0ea5e9" />
+                    <Text style={styles.actionText}>Download PDF</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.doneBtn}
+                    onPress={() => {
+                      setPdfModalVisible(false);
+                      onNavigateOrders && onNavigateOrders();
+                    }}
                   >
-                    <Trash2 size={18} color="#ef4444" />
+                    <Text style={styles.doneText}>Orders</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-            )}
-            contentContainerStyle={styles.listContent}
-          />
-
-          {/* Bottom Action Buttons */}
-          <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={clearCart}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.generateBtn}
-              onPress={handleGenerateQuotation}
-              disabled={submitting}
-            >
-              <FileCheck size={18} color="#000" />
-              <Text style={styles.generateText}>
-                {submitting ? 'Generating...' : 'Generate Quotation'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Generated Quotation PDF Preview Modal */}
-      {pdfModalVisible && generatedOrder && (
-        <Modal visible={pdfModalVisible} animationType="slide" transparent>
-          <View style={styles.pdfOverlay}>
-            <View style={styles.pdfCard}>
-              <View style={styles.pdfHeader}>
-                <View>
-                  <Text style={styles.pdfTitle}>PRODUCT QUOTATION PDF</Text>
-                  <Text style={styles.pdfRef}>{generatedOrder.orderNo}</Text>
-                </View>
-                <TouchableOpacity onPress={() => setPdfModalVisible(false)}>
-                  <X size={20} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.customerBox}>
-                <Text style={styles.custLabel}>CUSTOMER DETAILS</Text>
-                <Text style={styles.custName}>{generatedOrder.userName}</Text>
-                <Text style={styles.custSub}>{generatedOrder.userEmail} | {generatedOrder.userMobile}</Text>
-                <Text style={styles.custSub}>{generatedOrder.companyName || 'Individual'}</Text>
-              </View>
-
-              <Text style={styles.sectionHeading}>QUOTATION ITEMS LIST (NO PRICING)</Text>
-              <View style={styles.pdfItemsList}>
-                {generatedOrder.items.map((item, idx) => (
-                  <View key={idx} style={styles.pdfItemRow}>
-                    <View style={{ flex: 1, paddingRight: 8 }}>
-                      <Text style={styles.pdfItemName}>{item.productName}</Text>
-                      {(item.categoryName || item.subCategoryName) && (
-                        <Text style={styles.pdfItemCategory}>
-                          {item.categoryName} {item.subCategoryName ? `› ${item.subCategoryName}` : ''}
-                        </Text>
-                      )}
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                        {item.size ? (
-                          <Text style={{ fontSize: 10, color: '#64748b', backgroundColor: '#f1f5f9', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>Size: {item.size}</Text>
-                        ) : null}
-                        {item.productCode ? (
-                          <Text style={{ fontSize: 10, color: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.1)', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>Code: {item.productCode}</Text>
-                        ) : null}
-                        {item.packing ? (
-                          <Text style={{ fontSize: 10, color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>Packing: {item.packing}</Text>
-                        ) : null}
-                      </View>
-                    </View>
-                    <Text style={styles.pdfItemQty}>{item.quantity} Units</Text>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.disclaimerBox}>
-                <Text style={styles.disclaimerText}>
-                  ✓ Quotation created successfully. Omitted price fields as per strict policy.
-                </Text>
-              </View>
-
-              <View style={styles.pdfActions}>
-                <TouchableOpacity 
-                  style={styles.actionBtn}
-                  onPress={handleShareWhatsApp}
-                >
-                  <Share2 size={16} color="#0ea5e9" />
-                  <Text style={styles.actionText}>WhatsApp</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionBtn}
-                  onPress={handleDownloadPDF}
-                >
-                  <Download size={16} color="#0ea5e9" />
-                  <Text style={styles.actionText}>Download PDF</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.doneBtn}
-                  onPress={() => {
-                    setPdfModalVisible(false);
-                    onNavigateOrders && onNavigateOrders();
-                  }}
-                >
-                  <Text style={styles.doneText}>Orders</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </View>
-        </Modal>
-      )}
-    </View>
+          </Modal>
+        )}
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    width: '100%',
+    height: '100%',
   },
-  topHeader: {
+  safeArea: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 45,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingTop: 10,
+    paddingBottom: 15,
+  },
+  headerIconBtn: {
+    padding: 8,
+    position: 'relative',
   },
   headerTitle: {
-    color: '#0f172a',
-    fontSize: 20,
-    fontWeight: '800',
+    color: '#27347a',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
-  headerSub: {
-    color: '#0ea5e9',
-    fontSize: 12,
-    marginTop: 2,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 6,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: 'bold',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 10,
     paddingBottom: 90,
   },
   cartListItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    shadowColor: '#64748b',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: 3,
+    overflow: 'hidden',
+    padding: 12,
   },
-  itemInfo: {
-    flex: 1,
-    paddingRight: 12,
+  leftColumn: {
+    width: 100,
+    marginRight: 12,
   },
-  itemControls: {
+  imageContainer: {
+    width: '100%',
+    height: 100,
+    backgroundColor: '#dcf0fa',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    marginBottom: 8,
+  },
+  itemImage: {
+    width: '100%',
+    height: '100%',
+  },
+  removeBtn: {
+    backgroundColor: '#ef4444',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
+    paddingVertical: 6,
+    borderRadius: 4,
+    gap: 4,
   },
-  deleteBtn: {
-    padding: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderRadius: 8,
-  },
-  cardContent: {
-    padding: 10,
-  },
-  cardCategory: {
-    color: '#64748b',
-    fontSize: 11,
+  removeText: {
+    color: '#ffffff',
+    fontSize: 10,
     fontWeight: '600',
-    marginBottom: 4,
+  },
+  rightColumn: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  infoTop: {
+    flex: 1,
+    paddingTop: 4,
   },
   cardTitle: {
-    color: '#0f172a',
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 20,
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 2,
   },
-
+  cardCategory: {
+    color: '#94a3b8',
+    fontSize: 10,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
   qtyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    marginBottom: 10,
   },
   qtyBtn: {
     width: 28,
     height: 28,
-    borderRadius: 6,
+    borderRadius: 4,
     backgroundColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   qtyValue: {
-    color: '#0ea5e9',
-    fontSize: 14,
-    fontWeight: '800',
+    color: '#27347a',
+    fontSize: 16,
+    fontWeight: '600',
+    paddingHorizontal: 12,
+  },
+  sizeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#cffafe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  sizeText: {
+    color: '#0891b2',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    backgroundColor: '#38bdf8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    borderRadius: 4,
+    gap: 4,
+  },
+  saveText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   bottomBar: {
     position: 'absolute',
@@ -465,33 +536,31 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    height: 46,
-    borderRadius: 10,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    height: 40,
+    borderRadius: 4,
+    backgroundColor: '#ef4444',
     justifyContent: 'center',
     alignItems: 'center',
   },
   cancelText: {
-    color: '#fca5a5',
-    fontSize: 14,
-    fontWeight: '700',
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   generateBtn: {
     flex: 2,
-    height: 46,
-    borderRadius: 10,
-    backgroundColor: '#0ea5e9',
+    height: 40,
+    borderRadius: 4,
+    backgroundColor: '#38bdf8',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   generateText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '600',
   },
   emptyBox: {
     flex: 1,
@@ -500,7 +569,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   emptyTitle: {
-    color: '#0f172a',
+    color: '#27347a',
     fontSize: 18,
     fontWeight: '800',
     marginTop: 16,
@@ -511,151 +580,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
   },
-  /* PDF Modal */
-  pdfOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  pdfCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#0ea5e9',
-  },
-  pdfHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingBottom: 12,
-    marginBottom: 16,
-  },
-  pdfTitle: {
-    color: '#0ea5e9',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  pdfRef: {
-    color: '#64748b',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  customerBox: {
-    backgroundColor: '#f1f5f9',
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 16,
-  },
-  custLabel: {
-    color: '#64748b',
-    fontSize: 10,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  custName: {
-    color: '#0f172a',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  custSub: {
-    color: '#64748b',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  sectionHeading: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  pdfItemsList: {
-    gap: 8,
-    marginBottom: 16,
-  },
-  pdfItemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-  },
-  pdfItemName: {
-    color: '#0f172a',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  pdfItemCategory: {
-    color: '#64748b',
-    fontSize: 10,
-    marginTop: 2,
-  },
-  pdfItemQty: {
-    color: '#0ea5e9',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  disclaimerBox: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  disclaimerText: {
-    color: '#10b981',
-    fontSize: 11,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  pdfActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  actionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#0ea5e9',
-    gap: 6,
-  },
-  actionText: {
-    color: '#0ea5e9',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  doneBtn: {
-    flex: 1,
-    backgroundColor: '#0ea5e9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  doneText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  sizeBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(14, 165, 233, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(14, 165, 233, 0.15)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-    marginBottom: 2,
-  },
-  sizeText: {
-    color: '#0ea5e9',
-    fontSize: 9,
-    fontWeight: '700',
-  },
+  pdfOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', padding: 20 },
+  pdfCard: { backgroundColor: '#ffffff', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#0ea5e9' },
+  pdfHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingBottom: 12, marginBottom: 16 },
+  pdfTitle: { color: '#0ea5e9', fontSize: 16, fontWeight: '800' },
+  pdfRef: { color: '#64748b', fontSize: 12, marginTop: 2 },
+  customerBox: { backgroundColor: '#f1f5f9', padding: 12, borderRadius: 10, marginBottom: 16 },
+  custLabel: { color: '#64748b', fontSize: 10, fontWeight: '800', marginBottom: 4 },
+  custName: { color: '#0f172a', fontSize: 14, fontWeight: '700' },
+  custSub: { color: '#64748b', fontSize: 12, marginTop: 2 },
+  sectionHeading: { color: '#64748b', fontSize: 11, fontWeight: '800', marginBottom: 8 },
+  pdfItemsList: { gap: 8, marginBottom: 16 },
+  pdfItemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 10, backgroundColor: '#f8fafc', borderRadius: 8 },
+  pdfItemName: { color: '#0f172a', fontSize: 13, fontWeight: '600' },
+  pdfItemCategory: { color: '#64748b', fontSize: 10, marginTop: 2 },
+  pdfItemQty: { color: '#0ea5e9', fontSize: 13, fontWeight: '800' },
+  disclaimerBox: { backgroundColor: 'rgba(16,185,129,0.1)', padding: 10, borderRadius: 8, marginBottom: 16 },
+  disclaimerText: { color: '#10b981', fontSize: 11, textAlign: 'center', fontWeight: '600' },
+  pdfActions: { flexDirection: 'row', gap: 10 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: '#0ea5e9', gap: 6 },
+  actionText: { color: '#0ea5e9', fontSize: 11, fontWeight: '700' },
+  doneBtn: { flex: 1, backgroundColor: '#0ea5e9', justifyContent: 'center', alignItems: 'center', borderRadius: 10 },
+  doneText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
 });

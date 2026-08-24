@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ImageBackground, SafeAreaView } from 'react-native';
 import { KeyRound, Lock, ArrowLeft, CheckCircle } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -36,7 +36,9 @@ export default function ChangePasswordScreen({ onNavigateBack }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/splash_bg.png')} style={styles.background} resizeMode="cover">
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
       <TouchableOpacity onPress={onNavigateBack} style={styles.backBtn}>
         <ArrowLeft size={20} color="#0ea5e9" />
         <Text style={styles.backText}>Back</Text>
@@ -103,15 +105,24 @@ export default function ChangePasswordScreen({ onNavigateBack }) {
         </TouchableOpacity>
       </View>
     </View>
+    </SafeAreaView>
+  </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     paddingHorizontal: 20,
-    paddingTop: 45,
+    paddingTop: 15,
   },
   backBtn: {
     flexDirection: 'row',

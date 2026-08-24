@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { ClipboardList, Clock, CheckCircle2, XCircle, FileText } from 'lucide-react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground, SafeAreaView } from 'react-native';
+import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 import { apiRequest } from '../api';
 
-export default function OrdersScreen() {
+export default function OrdersScreen({ onNavigateBack }) {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('All');
   const [orders, setOrders] = useState([]);
@@ -51,12 +51,19 @@ export default function OrdersScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.topHeader}>
-        <Text style={styles.headerTitle}>Quotation Orders History</Text>
-        <Text style={styles.headerSub}>Track Status • Product Name & Qty Only</Text>
-      </View>
+    <ImageBackground source={require('../../assets/splash_bg.png')} style={styles.background} resizeMode="cover">
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.topHeader}>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <TouchableOpacity onPress={onNavigateBack} style={{paddingRight: 12}}>
+                 <ArrowLeft color="#27347a" size={24} />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Orders</Text>
+            </View>
+            <Text style={styles.headerSub}>Track Status • Product Name & Qty Only</Text>
+          </View>
 
       {/* Tabs */}
       <View style={styles.tabsRow}>
@@ -102,7 +109,7 @@ export default function OrdersScreen() {
                   <View key={idx} style={[styles.itemRow, { flexDirection: 'column', alignItems: 'stretch', gap: 4 }]}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Text style={styles.itemTitle}>{prod.productName}</Text>
-                      <Text style={styles.itemQty}>× {prod.quantity} Units</Text>
+                      <Text style={styles.itemQty}>× {prod.quantity} {prod.uom || 'Nos'}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                       {prod.size ? (
@@ -125,32 +132,41 @@ export default function OrdersScreen() {
           )}
         />
       )}
-    </View>
+        )}
+      </View>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
   topHeader: {
     paddingHorizontal: 20,
-    paddingTop: 45,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    paddingTop: 10,
+    paddingBottom: 15,
   },
   headerTitle: {
-    color: '#0f172a',
-    fontSize: 20,
-    fontWeight: '800',
+    color: '#27347a',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   headerSub: {
-    color: '#0ea5e9',
+    color: '#0891b2',
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   tabsRow: {
     flexDirection: 'row',
