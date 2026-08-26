@@ -1,9 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, BackHandler, LayoutAnimation, Platform, UIManager } from 'react-native';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 import { FavoriteProvider } from './src/context/FavoriteContext';
@@ -44,6 +42,10 @@ function MainAppNavigator() {
   };
 
   useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+    
     const onBackPress = () => {
       if (!user) {
         if (authScreen !== 'Login') {
