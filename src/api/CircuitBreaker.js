@@ -61,6 +61,6 @@ export class CircuitBreaker {
 export const apiCircuitBreaker = new CircuitBreaker({
   failureThreshold: 5,
   recoveryTimeout: 15000,
-  requestTimeout: 30000,
+  requestTimeout: 45000,
   maxConcurrency: 10
 });
