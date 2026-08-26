@@ -15,7 +15,9 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const [successMsg, setSuccessMsg] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [activeBanner, setActiveBanner] = useState(0);
-  const bannerScrollRef = useRef(null);
+  const bannerRef = useRef(null);
+  const activeBannerRef = useRef(0);
+  activeBannerRef.current = activeBanner;
 
   const unreadNotifications = 0;
 
@@ -31,16 +33,11 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     if (selectedCat || search || showSearch) return;
 
     const timer = setInterval(() => {
-      setActiveBanner((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % banners.length;
-        if (bannerScrollRef.current) {
-          bannerScrollRef.current.scrollTo({
-            x: nextIndex * width,
-            animated: true,
-          });
-        }
-        return nextIndex;
-      });
+      const nextIndex = (activeBannerRef.current + 1) % banners.length;
+      if (bannerRef.current) {
+        bannerRef.current.scrollTo({ x: nextIndex * width, animated: true });
+      }
+      setActiveBanner(nextIndex);
     }, 5000);
 
     return () => clearInterval(timer);
@@ -236,7 +233,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
               {/* Banner Slider */}
               <View style={styles.bannerWrapper}>
                 <ScrollView 
-                  ref={bannerScrollRef}
+                  ref={bannerRef}
                   horizontal 
                   pagingEnabled 
                   showsHorizontalScrollIndicator={false} 
