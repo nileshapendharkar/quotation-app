@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Alert, Image, ImageBackground } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { 
   Home, 
   Bookmark, 
@@ -9,12 +10,12 @@ import {
   LogOut, 
   Trash2, 
   X,
-  ExternalLink // used for edit profile badge
+  Camera
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
 export default function SideMenuModal({ visible, onClose, onNavigate }) {
-  const { user, logout, deleteAccount } = useContext(AuthContext);
+  const { user, logout, deleteAccount, updateProfileImage } = useContext(AuthContext);
 
   const menuItems = [
     { id: 'Home', label: 'Home', icon: Home },
@@ -47,10 +48,39 @@ export default function SideMenuModal({ visible, onClose, onNavigate }) {
     );
   };
 
-  // Safe fallback for user info
-  const companyName = (user && user.companyName) || 'Bunnny Enterprises';
-  const mobileNumber = (user && user.mobile) || '+91 98765 43210';
-  const profileAvatar = require('../../assets/icon.png'); // Placeholder
+  const handlePickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photo gallery to select a profile picture.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedUri = result.assets[0].uri;
+        if (updateProfileImage) {
+          await updateProfileImage(selectedUri);
+        }
+      }
+    } catch (e) {
+      console.error('Image selection error:', e);
+      Alert.alert('Error', 'Failed to pick image from gallery');
+    }
+  };
+
+  // Safe fallback for user info & profile picture
+  const companyName = (user && user.companyName) || 'Gouri Aqua Plast';
+  const mobileNumber = (user && user.mobile) || '+91 92250 87140';
+  const profileAvatar = (user && user.profileImage) 
+    ? { uri: user.profileImage } 
+    : require('../../assets/icon.png');
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
@@ -67,15 +97,15 @@ export default function SideMenuModal({ visible, onClose, onNavigate }) {
           >
             <View style={styles.headerContent}>
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <X size={24} color="#ffffff" />
+                <X size={24} color="#1e3a8a" />
               </TouchableOpacity>
 
-              <View style={styles.avatarWrapper}>
+              <TouchableOpacity style={styles.avatarWrapper} onPress={handlePickImage} activeOpacity={0.8}>
                 <Image source={profileAvatar} style={styles.avatarImage} />
                 <View style={styles.editBadge}>
-                  <ExternalLink size={12} color="#000000" />
+                  <Camera size={14} color="#1e3a8a" />
                 </View>
-              </View>
+              </TouchableOpacity>
 
               <Text style={styles.userName} numberOfLines={1}>{companyName}</Text>
               <Text style={styles.userMobile}>{mobileNumber}</Text>
@@ -191,15 +221,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   userName: {
-    color: '#ffffff',
+    color: '#1e3a8a',
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '900',
     marginBottom: 4,
   },
   userMobile: {
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#334155',
+    fontSize: 15,
+    fontWeight: '700',
   },
   menuList: {
     flex: 1,

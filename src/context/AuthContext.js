@@ -95,6 +95,12 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const updateProfileImage = async (imageUri) => {
+    const updatedUser = { ...(user || {}), profileImage: imageUri };
+    setUser(updatedUser);
+    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -105,6 +111,7 @@ export const AuthProvider = ({ children }) => {
       register,
       logout,
       updateProfile,
+      updateProfileImage,
       changePassword,
       deleteAccount
     }}>
