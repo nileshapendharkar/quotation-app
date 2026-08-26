@@ -80,94 +80,182 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
         style={styles.background}
         resizeMode="cover"
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
-          style={styles.keyboardView}
-        >
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollGrow} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <View style={styles.container}>
-              {/* Logo Section */}
-              <View style={styles.brandBox}>
-                <Image
-                  source={require('../../assets/splash_logo.png')}
-                  style={styles.logo}
-                  resizeMode="contain"
-                />
-                <Text style={styles.brandTitle}>Login</Text>
-              </View>
-
-              {error ? (
-                <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>{error}</Text>
+        {Platform.OS === 'ios' ? (
+          <KeyboardAvoidingView 
+            behavior="padding" 
+            style={styles.keyboardView}
+          >
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollGrow} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={styles.container}>
+                {/* Logo Section */}
+                <View style={styles.brandBox}>
+                  <Image
+                    source={require('../../assets/splash_logo.png')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.brandTitle}>Login</Text>
                 </View>
-              ) : null}
 
-              {/* Form Section */}
-              <View style={styles.form}>
-                {step === 1 ? (
-                  <View>
-                    <Text style={styles.inputLabel}>Phone Number:</Text>
-                    <View style={styles.inputContainer}>
-                      <Smartphone size={22} color="#000" style={styles.icon} />
-                      <View style={styles.countryCodeContainer}>
-                        <Text style={styles.countryCodeText}>+91</Text>
-                        <ChevronDown size={14} color="#000" />
-                      </View>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="98765 43210"
-                        placeholderTextColor="#94a3b8"
-                        value={phone}
-                        onChangeText={setPhone}
-                        autoCapitalize="none"
-                        keyboardType="phone-pad"
-                      />
-                    </View>
-                    <TouchableOpacity style={styles.submitBtn} onPress={handleSendOTP} disabled={loading}>
-                      <Text style={styles.submitText}>Send OTP</Text>
-                    </TouchableOpacity>
+                {error ? (
+                  <View style={styles.errorBox}>
+                    <Text style={styles.errorText}>{error}</Text>
                   </View>
-                ) : (
-                  <View>
-                    <Text style={styles.otpLabelTop}>OTP Send to</Text>
-                    <View style={styles.otpPhoneRow}>
-                      <Text style={styles.otpPhoneText}>+91 {phone || '98765 43210'}</Text>
-                      <TouchableOpacity onPress={() => setStep(1)}>
-                        <Text style={styles.editNumberText}>Edit Number</Text>
+                ) : null}
+
+                {/* Form Section */}
+                <View style={styles.form}>
+                  {step === 1 ? (
+                    <View>
+                      <Text style={styles.inputLabel}>Phone Number:</Text>
+                      <View style={styles.inputContainer}>
+                        <Smartphone size={22} color="#000" style={styles.icon} />
+                        <View style={styles.countryCodeContainer}>
+                          <Text style={styles.countryCodeText}>+91</Text>
+                          <ChevronDown size={14} color="#000" />
+                        </View>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="98765 43210"
+                          placeholderTextColor="#94a3b8"
+                          value={phone}
+                          onChangeText={setPhone}
+                          autoCapitalize="none"
+                          keyboardType="phone-pad"
+                        />
+                      </View>
+                      <TouchableOpacity style={styles.submitBtn} onPress={handleSendOTP} disabled={loading}>
+                        <Text style={styles.submitText}>Send OTP</Text>
                       </TouchableOpacity>
                     </View>
-                    
-                    <View style={styles.otpBoxesContainer}>
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <TextInput
-                          key={index}
-                          ref={(ref) => (otpRefs.current[index] = ref)}
-                          style={styles.otpBox}
-                          placeholder="0"
-                          placeholderTextColor="#f1f5f9"
-                          keyboardType="number-pad"
-                          maxLength={1}
-                          secureTextEntry={false}
-                          value={otp[index] || ''}
-                          onChangeText={(val) => handleOtpChange(val, index)}
-                          onKeyPress={(e) => handleOtpKeyPress(e, index)}
-                        />
-                      ))}
-                    </View>
+                  ) : (
+                    <View>
+                      <Text style={styles.otpLabelTop}>OTP Send to</Text>
+                      <View style={styles.otpPhoneRow}>
+                        <Text style={styles.otpPhoneText}>+91 {phone || '98765 43210'}</Text>
+                        <TouchableOpacity onPress={() => setStep(1)}>
+                          <Text style={styles.editNumberText}>Edit Number</Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      <View style={styles.otpBoxesContainer}>
+                        {[0, 1, 2, 3, 4, 5].map((index) => (
+                          <TextInput
+                            key={index}
+                            ref={(ref) => (otpRefs.current[index] = ref)}
+                            style={styles.otpBox}
+                            placeholder="0"
+                            placeholderTextColor="#f1f5f9"
+                            keyboardType="number-pad"
+                            maxLength={1}
+                            secureTextEntry={false}
+                            value={otp[index] || ''}
+                            onChangeText={(val) => handleOtpChange(val, index)}
+                            onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                          />
+                        ))}
+                      </View>
 
-                    <TouchableOpacity style={styles.submitBtn} onPress={handleLogin} disabled={loading}>
-                      {loading ? (
-                        <ActivityIndicator color="#ffffff" />
-                      ) : (
-                        <Text style={styles.submitText}>Verify & Continue</Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                )}
+                      <TouchableOpacity style={styles.submitBtn} onPress={handleLogin} disabled={loading}>
+                        {loading ? (
+                          <ActivityIndicator color="#ffffff" />
+                        ) : (
+                          <Text style={styles.submitText}>Verify & Continue</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        ) : (
+          <View style={styles.keyboardView}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollGrow} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={styles.container}>
+                {/* Logo Section */}
+                <View style={styles.brandBox}>
+                  <Image
+                    source={require('../../assets/splash_logo.png')}
+                    style={styles.logo}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.brandTitle}>Login</Text>
+                </View>
+
+                {error ? (
+                  <View style={styles.errorBox}>
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                ) : null}
+
+                {/* Form Section */}
+                <View style={styles.form}>
+                  {step === 1 ? (
+                    <View>
+                      <Text style={styles.inputLabel}>Phone Number:</Text>
+                      <View style={styles.inputContainer}>
+                        <Smartphone size={22} color="#000" style={styles.icon} />
+                        <View style={styles.countryCodeContainer}>
+                          <Text style={styles.countryCodeText}>+91</Text>
+                          <ChevronDown size={14} color="#000" />
+                        </View>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="98765 43210"
+                          placeholderTextColor="#94a3b8"
+                          value={phone}
+                          onChangeText={setPhone}
+                          autoCapitalize="none"
+                          keyboardType="phone-pad"
+                        />
+                      </View>
+                      <TouchableOpacity style={styles.submitBtn} onPress={handleSendOTP} disabled={loading}>
+                        <Text style={styles.submitText}>Send OTP</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View>
+                      <Text style={styles.otpLabelTop}>OTP Send to</Text>
+                      <View style={styles.otpPhoneRow}>
+                        <Text style={styles.otpPhoneText}>+91 {phone || '98765 43210'}</Text>
+                        <TouchableOpacity onPress={() => setStep(1)}>
+                          <Text style={styles.editNumberText}>Edit Number</Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      <View style={styles.otpBoxesContainer}>
+                        {[0, 1, 2, 3, 4, 5].map((index) => (
+                          <TextInput
+                            key={index}
+                            ref={(ref) => (otpRefs.current[index] = ref)}
+                            style={styles.otpBox}
+                            placeholder="0"
+                            placeholderTextColor="#f1f5f9"
+                            keyboardType="number-pad"
+                            maxLength={1}
+                            secureTextEntry={false}
+                            value={otp[index] || ''}
+                            onChangeText={(val) => handleOtpChange(val, index)}
+                            onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                          />
+                        ))}
+                      </View>
+
+                      <TouchableOpacity style={styles.submitBtn} onPress={handleLogin} disabled={loading}>
+                        {loading ? (
+                          <ActivityIndicator color="#ffffff" />
+                        ) : (
+                          <Text style={styles.submitText}>Verify & Continue</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        )}
       </ImageBackground>
     </SafeAreaView>
   );
