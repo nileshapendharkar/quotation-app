@@ -74,17 +74,17 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/splash_bg.png')}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
+      <ImageBackground
+        source={require('../../assets/splash_bg.png')}
+        style={styles.background}
+        resizeMode="cover"
+      >
         <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
           style={styles.keyboardView}
         >
-          <ScrollView contentContainerStyle={styles.scrollGrow} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollGrow} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={styles.container}>
               {/* Logo Section */}
               <View style={styles.brandBox}>
@@ -168,15 +168,15 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ImageBackground>
+      </ImageBackground>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#ffffff',
   },
   keyboardView: {
     flex: 1,
