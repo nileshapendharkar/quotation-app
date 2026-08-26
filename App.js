@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, BackHandler, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar, BackHandler, Platform, Text, ScrollView } from 'react-native';
 
 
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
@@ -24,6 +24,41 @@ import BottomTabBar from './src/components/BottomTabBar';
 import SideMenuModal from './src/components/SideMenuModal';
 import LaunchAnimation from './src/components/LaunchAnimation';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc', padding: 20, justifyContent: 'center' }}>
+          <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#ef4444', marginBottom: 10 }}>App Crashed!</Text>
+          <ScrollView style={{ flex: 1 }}>
+            <Text style={{ color: '#000', fontFamily: 'monospace' }}>
+              {this.state.error && this.state.error.toString()}
+            </Text>
+            <Text style={{ color: '#666', fontFamily: 'monospace', marginTop: 10 }}>
+              {this.state.errorInfo && this.state.errorInfo.componentStack}
+            </Text>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function MainAppNavigator() {
   const { user } = useContext(AuthContext);
 
@@ -32,20 +67,14 @@ function MainAppNavigator() {
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
 
   const changeAuthScreen = (screen) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setAuthScreen(screen);
   };
 
   const changeTab = (tab) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setCurrentTab(tab);
   };
 
   useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-    
     const onBackPress = () => {
       if (!user) {
         if (authScreen !== 'Login') {
@@ -157,9 +186,11 @@ export default function App() {
   const [showLaunch, setShowLaunch] = useState(true);
 
   return (
-    <AuthProvider>
-      <AppContent showLaunch={showLaunch} setShowLaunch={setShowLaunch} />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent showLaunch={showLaunch} setShowLaunch={setShowLaunch} />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
