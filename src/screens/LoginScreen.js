@@ -28,12 +28,14 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
 
     if (res.success) {
       setOtpToken(res.otpToken);
-      setOtp('');
       setStep(2);
-      // In production, we don't alert the OTP. For dev testing:
+      
+      // Auto-fill OTP for development/testing
       if (res.mockOtp) {
-        console.log('Mock OTP:', res.mockOtp);
-        Alert.alert('Development Mode', `Your Mock OTP is: ${res.mockOtp}`);
+        console.log('Mock OTP Auto-filled:', res.mockOtp);
+        setOtp(res.mockOtp.toString());
+      } else {
+        setOtp('');
       }
     } else {
       setError(res.message);
