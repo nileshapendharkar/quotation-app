@@ -28,7 +28,7 @@
     "jimp": "^0.16.1"
   },
   "private": true,
-  "main": "App.js",
+  "main": "node_modules/expo/AppEntry.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nileshapendharkar/quotation-app-mobile.git"
