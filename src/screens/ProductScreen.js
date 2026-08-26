@@ -15,6 +15,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const [successMsg, setSuccessMsg] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [activeBanner, setActiveBanner] = useState(0);
+  const bannerScrollRef = useRef(null);
 
   const unreadNotifications = 0;
 
@@ -25,6 +26,25 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     require('../../assets/8.jpg'),
     require('../../assets/9.jpg')
   ];
+
+  useEffect(() => {
+    if (selectedCat || search || showSearch) return;
+
+    const timer = setInterval(() => {
+      setActiveBanner((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % banners.length;
+        if (bannerScrollRef.current) {
+          bannerScrollRef.current.scrollTo({
+            x: nextIndex * width,
+            animated: true,
+          });
+        }
+        return nextIndex;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [selectedCat, search, showSearch, banners.length]);
 
   const [categories, setCategories] = useState([
     { id: '', name: 'All Groups', image: null },
@@ -216,6 +236,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
               {/* Banner Slider */}
               <View style={styles.bannerWrapper}>
                 <ScrollView 
+                  ref={bannerScrollRef}
                   horizontal 
                   pagingEnabled 
                   showsHorizontalScrollIndicator={false} 
