@@ -600,15 +600,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 16,
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
   },
   categoryCard: {
-    width: (width - 60) / 3, // Correctly account for 3 cards and 3 margins in a container with horizontal padding
-    height: ((width - 60) / 3) * 1.45, // Maintain aspect ratio across all screen sizes
+    width: '31.5%',
+    aspectRatio: 0.70,
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 16,
+    marginBottom: 14,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -619,7 +618,7 @@ const styles = StyleSheet.create({
   },
   categoryImageWrapper: {
     flex: 1,
-    padding: 8,
+    padding: 6,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
@@ -636,17 +635,18 @@ const styles = StyleSheet.create({
   },
   categoryTextWrapper: {
     backgroundColor: '#e0f2fe',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 46,
+    minHeight: 44,
   },
   categoryText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
     color: '#0f172a',
     textAlign: 'center',
+    lineHeight: 12,
   },
   subCategorySection: {
     paddingTop: 10,
