@@ -81,7 +81,7 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
         resizeMode="cover"
       >
         <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
           style={styles.keyboardView}
         >
           <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollGrow} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
