@@ -47,7 +47,15 @@ export const apiRequest = async (endpoint, method = 'GET', body = null) => {
   const action = async (signal) => {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, signal });
     if (!res.ok) {
-      throw new Error(`HTTP Error: ${res.status}`);
+      if (res.status >= 500) {
+        throw new Error(`Server Error: ${res.status}`);
+      }
+      try {
+        const errorData = await res.json();
+        return errorData;
+      } catch (e) {
+        throw new Error(`HTTP Error: ${res.status}`);
+      }
     }
     return await res.json();
   };

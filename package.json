@@ -14,6 +14,7 @@
     "expo": "~50.0.14",
     "expo-print": "~12.8.1",
     "expo-sharing": "~11.10.0",
+    "expo-splash-screen": "~0.26.5",
     "expo-status-bar": "~1.11.1",
     "lucide-react-native": "^0.344.0",
     "react": "18.2.0",
@@ -23,7 +24,21 @@
     "react-native-web": "~0.19.10"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "jimp": "^0.16.1"
   },
-  "private": true
+  "private": true,
+  "main": "App.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nileshapendharkar/quotation-app-mobile.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nileshapendharkar/quotation-app-mobile/issues"
+  },
+  "homepage": "https://github.com/nileshapendharkar/quotation-app-mobile#readme",
+  "description": ""
 }

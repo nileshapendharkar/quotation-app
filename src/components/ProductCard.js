@@ -56,7 +56,8 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
   },
   imageContainer: {
-    height: 140,
+    aspectRatio: 1, // Dynamically scales to always be a perfect square on any screen size
+    width: '100%',
     position: 'relative',
     backgroundColor: '#f1f5f9',
   },

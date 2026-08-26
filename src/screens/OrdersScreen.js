@@ -22,7 +22,7 @@ export default function OrdersScreen({ onNavigateBack }) {
 
   const filteredOrders = orders.filter(o => {
     if (activeTab === 'All') return true;
-    return o.status.toLowerCase() === activeTab.toLowerCase();
+    return (o.status || '').toLowerCase() === activeTab.toLowerCase();
   });
 
   const renderStatusBadge = (status) => {
@@ -105,7 +105,7 @@ export default function OrdersScreen({ onNavigateBack }) {
 
               <Text style={styles.sectionLabel}>REQUESTED ITEMS (NO PRICING)</Text>
               <View style={styles.itemsList}>
-                {item.items.map((prod, idx) => (
+                {(item.items || []).map((prod, idx) => (
                   <View key={idx} style={[styles.itemRow, { flexDirection: 'column', alignItems: 'stretch', gap: 4 }]}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Text style={styles.itemTitle}>{prod.productName}</Text>
@@ -132,7 +132,6 @@ export default function OrdersScreen({ onNavigateBack }) {
           )}
         />
       )}
-        )}
       </View>
       </SafeAreaView>
     </ImageBackground>

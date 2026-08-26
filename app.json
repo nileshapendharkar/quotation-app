@@ -28,11 +28,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "owner": "npendharkar8",
     "extra": {
       "eas": {
-        "projectId": "78179c3a-1912-4344-b79c-71117dbaac12"
+        "projectId": "4cc922c5-1c28-4a4e-a0eb-93f28bff4370"
       }
-    },
-    "owner": "npendharkar7"
+    }
   }
 }

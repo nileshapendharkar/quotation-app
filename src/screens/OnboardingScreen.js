@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, SafeAreaView, ImageBackground } from 'react-native';
+import { ArrowRight } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,8 +31,8 @@ export default function OnboardingScreen({ onNavigateNext }) {
         <View style={styles.illustrationContainer}>
           <Image 
             source={step === 0 
-              ? require('../../assets/onboarding_illustration.png') 
-              : require('../../assets/onboarding_illustration2.png')} 
+              ? require('../../assets/icon.png') 
+              : require('../../assets/icon.png')} 
             style={styles.illustration}
             resizeMode="contain"
           />
@@ -61,12 +62,8 @@ export default function OnboardingScreen({ onNavigateNext }) {
 
         {/* Next Button */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-            <Image 
-              source={require('../../assets/next_arrow.png')} 
-              style={styles.nextArrow}
-              resizeMode="contain"
-            />
+          <TouchableOpacity style={[styles.nextButton, { backgroundColor: '#27347a', borderRadius: 40 }]} onPress={handleNext}>
+            <ArrowRight color="#ffffff" size={32} />
           </TouchableOpacity>
         </View>
       </ImageBackground>

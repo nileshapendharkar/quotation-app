@@ -1,13 +1,17 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, ImageBackground, Image, Dimensions } from 'react-native';
-import { Menu, Bell, Plus, Info } from 'lucide-react-native';
+import { Menu, Bell, Plus, Info, User } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.42;
+const CARD_MARGIN = 16;
+const SNAP_INTERVAL = CARD_WIDTH + CARD_MARGIN;
 
 export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOrders, onNavigateNotifications }) {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('Create');
+  const scrollRef = useRef(null);
 
   const tabs = ['Create', 'Total', 'Draft', 'Submit', 'Decline'];
   
@@ -15,7 +19,22 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
 
   const handleTabPress = (tab) => {
     setActiveTab(tab);
-    // In a full implementation, this would also scroll the horizontal list to the correct index
+    const index = tabs.indexOf(tab);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ x: index * SNAP_INTERVAL, animated: true });
+    }
+  };
+
+  const handleCardsScroll = (event) => {
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollX / SNAP_INTERVAL);
+    if (index >= 0 && index < tabs.length) {
+      const tab = tabs[index];
+      setActiveTab(prevTab => {
+        if (prevTab !== tab) return tab;
+        return prevTab;
+      });
+    }
   };
 
   return (
@@ -54,11 +73,8 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
                 Create professional quotations in just a few clicks, keep all your quotation records organized, and manage your entire quotation workflow effortlessly. Work smarter, respond faster, and stay on top of every business opportunity.
               </Text>
             </View>
-            <View style={styles.avatarContainer}>
-              <Image 
-                source={require('../../assets/avatar.png')} 
-                style={styles.avatar} 
-              />
+            <View style={[styles.avatarContainer, { backgroundColor: '#e0f2fe', justifyContent: 'center', alignItems: 'center' }]}>
+              <User color="#1e3a8a" size={32} />
             </View>
           </View>
 
@@ -73,7 +89,14 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
           </ScrollView>
 
           {/* Action/Stat Cards (Horizontal Scroll) */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardsScrollContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={styles.cardsScrollContainer}
+            ref={scrollRef}
+            onScroll={handleCardsScroll}
+            scrollEventThrottle={16}
+          >
             {/* Create Card */}
             <TouchableOpacity style={styles.createCard} onPress={onNavigateProduct}>
               <View style={styles.createIconCircle}>
@@ -84,7 +107,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
             {/* Total Card */}
             <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
               <View style={styles.statImageContainer}>
-                <Image source={require('../../assets/home_total.png')} style={styles.statImage} resizeMode="contain" />
+                <Image source={require('../../assets/1.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
                 <Text style={styles.statNumber}>05</Text>
@@ -95,7 +118,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
             {/* Draft Card */}
             <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
               <View style={styles.statImageContainer}>
-                <Image source={require('../../assets/home_draft.png')} style={styles.statImage} resizeMode="contain" />
+                <Image source={require('../../assets/2.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
                 <Text style={styles.statNumber}>02</Text>
@@ -106,7 +129,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
             {/* Submit Card */}
             <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
               <View style={styles.statImageContainer}>
-                <Image source={require('../../assets/home_submit.png')} style={styles.statImage} resizeMode="contain" />
+                <Image source={require('../../assets/3.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
                 <Text style={styles.statNumber}>01</Text>
@@ -117,7 +140,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
             {/* Decline Card */}
             <TouchableOpacity style={styles.statCard} onPress={onNavigateOrders}>
               <View style={styles.statImageContainer}>
-                <Image source={require('../../assets/home_decline.png')} style={styles.statImage} resizeMode="contain" />
+                <Image source={require('../../assets/4.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
                 <Text style={styles.statNumber}>01</Text>
@@ -315,13 +338,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   createCard: {
-    width: 170,
-    height: 220,
+    width: CARD_WIDTH,
+    height: CARD_WIDTH * 1.3,
     backgroundColor: '#ffffff',
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: CARD_MARGIN,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -337,13 +360,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statCard: {
-    width: 170,
-    height: 220,
+    width: CARD_WIDTH,
+    height: CARD_WIDTH * 1.3,
     backgroundColor: '#ffffff',
     borderRadius: 16,
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: CARD_MARGIN,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

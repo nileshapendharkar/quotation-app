@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Home, Palette, Bookmark, ShoppingCart, PackageCheck } from 'lucide-react-native';
 import { CartContext } from '../context/CartContext';
 
@@ -8,11 +8,11 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
   const cartCount = (cartItems && cartItems.length) || 0;
 
   const tabs = [
-    { id: 'Home', label: 'HOME', icon: Home },
-    { id: 'Product', label: '', icon: Palette },
-    { id: 'Favorite', label: '', icon: Bookmark },
-    { id: 'Cart', label: '', icon: ShoppingCart, showBadge: true },
-    { id: 'Orders', label: '', icon: PackageCheck },
+    { id: 'Home', label: 'HOME', isImage: false, icon: Home },
+    { id: 'Product', label: 'CATALOG', isImage: false, icon: Palette },
+    { id: 'Favorite', label: 'SAVED', isImage: false, icon: Bookmark },
+    { id: 'Cart', label: 'CART', isImage: false, icon: ShoppingCart, showBadge: true },
+    { id: 'Orders', label: 'ORDER', isImage: false, icon: PackageCheck },
   ];
 
   return (
@@ -30,13 +30,21 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
             {isActive ? (
               <View style={styles.activeTabWrapper}>
                 <View style={styles.activeCircle}>
-                  <IconComponent size={30} color="#27347a" fill="#27347a" />
+                  {tab.isImage ? (
+                    <Image source={tab.source} style={{ width: 30, height: 30, tintColor: '#27347a' }} resizeMode="contain" />
+                  ) : (
+                    <IconComponent size={30} color="#27347a" fill="#27347a" />
+                  )}
                 </View>
                 {tab.label ? <Text style={styles.activeTabLabel}>{tab.label}</Text> : null}
               </View>
             ) : (
               <View style={styles.inactiveIconContainer}>
-                <IconComponent size={26} color="#64748b" />
+                {tab.isImage ? (
+                  <Image source={tab.source} style={{ width: 26, height: 26, tintColor: '#64748b' }} resizeMode="contain" />
+                ) : (
+                  <IconComponent size={26} color="#64748b" />
+                )}
                 {tab.showBadge && cartCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{cartCount}</Text>

@@ -19,11 +19,11 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const unreadNotifications = 0;
 
   const banners = [
-    require('../../assets/banner1.jpg'),
-    require('../../assets/banner2.jpg'),
-    require('../../assets/banner3.jpg'),
-    require('../../assets/banner4.jpg'),
-    require('../../assets/banner5.jpg')
+    require('../../assets/5.jpg'),
+    require('../../assets/6.jpg'),
+    require('../../assets/7.jpg'),
+    require('../../assets/8.jpg'),
+    require('../../assets/9.jpg')
   ];
 
   const [categories, setCategories] = useState([
@@ -223,7 +223,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                   scrollEventThrottle={16}
                 >
                   {banners.map((img, idx) => (
-                    <Image key={idx} source={img} style={styles.bannerImage} resizeMode="cover" />
+                    <Image key={idx} source={img} style={styles.bannerImage} resizeMode="contain" />
                   ))}
                 </ScrollView>
                 <View style={styles.carouselDots}>
@@ -256,16 +256,32 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                 </View>
               </View>
               
-              {/* Added to populate the lower half gracefully */}
-              <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-                <Text style={styles.sectionTitle}>All Products</Text>
-              </View>
             </React.Fragment>
           )}
 
-          {/* Subcategory Chips if a category is selected */}
+          {/* Main Category Chips if a category is selected */}
           {selectedCat && !search && (
-            <View style={styles.subCategorySection}>
+            <View style={[styles.subCategorySection, { paddingBottom: currentSubCats.length > 0 ? 5 : 16 }]}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScroll}>
+                {categories.filter(c => c.id !== '').map((cat) => {
+                  const isSelCat = selectedCat === cat.id;
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[styles.catChip, isSelCat && styles.catChipActive]}
+                      onPress={() => handleSelectCategory(cat.id)}
+                    >
+                      <Text style={[styles.catChipText, isSelCat && styles.catChipTextActive]}>{cat.name}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Subcategory Chips if a category is selected */}
+          {selectedCat && !search && currentSubCats.length > 0 && (
+            <View style={[styles.subCategorySection, { paddingTop: 5 }]}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScroll}>
                 <TouchableOpacity
                   style={[styles.catChip, !selectedSubCat && styles.catChipActive]}
@@ -289,8 +305,8 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
             </View>
           )}
 
-          {/* Products Grid (if category is selected or search is active, or default 'All Products' below banners) */}
-          {(selectedCat || search || showSearch || (!selectedCat && !search && !showSearch)) && (
+          {/* Products Grid (if category is selected or search is active) */}
+          {(selectedCat || search || showSearch) && (
             <View style={styles.gridContainer}>
               {filteredProducts.length === 0 ? (
                 <View style={styles.emptyBox}>
@@ -587,8 +603,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   categoryCard: {
-    width: (width - 32 - 16) / 3, // 3 columns with 8 gap: (100% - padding - gaps) / 3
-    height: 145,
+    width: (width - 60) / 3, // Correctly account for 3 cards and 3 margins in a container with horizontal padding
+    height: ((width - 60) / 3) * 1.45, // Maintain aspect ratio across all screen sizes
     backgroundColor: '#ffffff',
     borderRadius: 12,
     marginRight: 8,
