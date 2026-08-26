@@ -65,7 +65,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
           <View style={styles.welcomeCard}>
             <View style={styles.welcomeTextContent}>
               <Text style={styles.welcomeLabel}>Welcome back,</Text>
-              <Text style={styles.companyName} numberOfLines={1}>{(user && user.companyName) || 'Bunnny Enterprises'}</Text>
+              <Text style={styles.companyName} numberOfLines={1}>{(user && (user.companyName || user.name)) || 'Gouri Aqua Plast'}</Text>
               <Text style={styles.dateText}>19 August, 2026</Text>
               
               <Text style={styles.welcomeSubtextBold}>The Easy Way to Create & Manage Quotations</Text>
@@ -73,9 +73,17 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
                 Create professional quotations in just a few clicks, keep all your quotation records organized, and manage your entire quotation workflow effortlessly. Work smarter, respond faster, and stay on top of every business opportunity.
               </Text>
             </View>
-            <View style={[styles.avatarContainer, { backgroundColor: '#e0f2fe', justifyContent: 'center', alignItems: 'center' }]}>
-              <User color="#1e3a8a" size={32} />
-            </View>
+            <TouchableOpacity 
+              style={[styles.avatarContainer, { backgroundColor: '#ffffff', justifyContent: 'center', alignItems: 'center' }]}
+              onPress={() => setSideMenuVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Image 
+                source={(user && user.profileImage) ? { uri: user.profileImage } : require('../../assets/icon.png')} 
+                style={styles.avatar} 
+                resizeMode="cover" 
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Horizontal Tabs */}
