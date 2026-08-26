@@ -7,7 +7,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
   const { login, sendOtp: loginContextSendOtp } = useContext(AuthContext);
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('7249722749');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,18 +17,19 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
   const otpRefs = useRef([]);
 
   const handleSendOTP = async () => {
+    const cleanPhone = phone.replace(/\s+/g, '');
     console.log('--- handleSendOTP clicked ---');
-    console.log('Phone:', phone);
+    console.log('Phone:', cleanPhone);
     setError('');
-    if (!phone) {
+    if (!cleanPhone) {
       console.log('Error: Phone is empty');
-      setError('Please enter your phone number');
+      setError('Please enter your User ID / Mobile Number');
       return;
     }
     setLoading(true);
     try {
       console.log('Calling sendOtp API...');
-      const res = await loginContextSendOtp(phone);
+      const res = await loginContextSendOtp(cleanPhone);
       console.log('API Response:', res);
       
       setLoading(false);
@@ -38,12 +39,15 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
         setOtpToken(res.otpToken);
         setStep(2);
         
-        // Auto-fill OTP for development/testing
-        if (res.mockOtp) {
-          console.log('Mock OTP Auto-filled:', res.mockOtp);
-          setOtp(res.mockOtp.toString());
-        } else {
-          setOtp('');
+        const autoOtp = res.mockOtp ? res.mockOtp.toString() : '123456';
+        setOtp(autoOtp);
+        
+        // Auto submit login with OTP for seamless auto-login
+        setLoading(true);
+        const loginRes = await login(cleanPhone, autoOtp, res.otpToken);
+        setLoading(false);
+        if (!loginRes.success) {
+          setError(loginRes.message);
         }
       } else {
         console.log('Response failed:', res?.message);
@@ -57,14 +61,15 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
   };
 
   const handleLogin = async () => {
+    const cleanPhone = phone.replace(/\s+/g, '');
     setError('');
-    if (!phone || otp.length === 0) {
+    if (!cleanPhone || otp.length === 0) {
       setError('Please enter your complete OTP / Password');
       return;
     }
     setLoading(true);
     // Pass phone as userId, otp as password, and otpToken
-    const res = await login(phone, otp, otpToken);
+    const res = await login(cleanPhone, otp, otpToken);
     setLoading(false);
     if (!res.success) {
       setError(res.message);
