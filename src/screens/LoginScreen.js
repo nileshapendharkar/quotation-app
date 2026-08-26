@@ -17,28 +17,42 @@ export default function LoginScreen({ onNavigateRegister, onNavigateForgot }) {
   const otpRefs = useRef([]);
 
   const handleSendOTP = async () => {
+    console.log('--- handleSendOTP clicked ---');
+    console.log('Phone:', phone);
     setError('');
     if (!phone) {
+      console.log('Error: Phone is empty');
       setError('Please enter your phone number');
       return;
     }
     setLoading(true);
-    const res = await login.sendOtp ? await login.sendOtp(phone) : await loginContextSendOtp(phone);
-    setLoading(false);
-
-    if (res.success) {
-      setOtpToken(res.otpToken);
-      setStep(2);
+    try {
+      console.log('Calling sendOtp API...');
+      const res = await loginContextSendOtp(phone);
+      console.log('API Response:', res);
       
-      // Auto-fill OTP for development/testing
-      if (res.mockOtp) {
-        console.log('Mock OTP Auto-filled:', res.mockOtp);
-        setOtp(res.mockOtp.toString());
+      setLoading(false);
+
+      if (res && res.success) {
+        console.log('Success! Proceeding to Step 2');
+        setOtpToken(res.otpToken);
+        setStep(2);
+        
+        // Auto-fill OTP for development/testing
+        if (res.mockOtp) {
+          console.log('Mock OTP Auto-filled:', res.mockOtp);
+          setOtp(res.mockOtp.toString());
+        } else {
+          setOtp('');
+        }
       } else {
-        setOtp('');
+        console.log('Response failed:', res?.message);
+        setError(res?.message || 'Failed to send OTP');
       }
-    } else {
-      setError(res.message);
+    } catch (err) {
+      console.log('CAUGHT EXCEPTION IN handleSendOTP:', err);
+      setLoading(false);
+      setError(err.message || 'An unexpected error occurred');
     }
   };
 

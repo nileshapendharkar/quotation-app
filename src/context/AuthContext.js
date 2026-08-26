@@ -30,11 +30,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (userId, password, otpToken = null) => {
-    setLoading(true);
     const payload = { userId, mobile: userId, password };
     if (otpToken) payload.otpToken = otpToken;
     const res = await apiRequest('/auth/login', 'POST', payload);
-    setLoading(false);
 
     if (res.success) {
       setUser(res.user);
@@ -48,16 +46,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const sendOtp = async (mobile) => {
-    setLoading(true);
     const res = await apiRequest('/auth/send-otp', 'POST', { mobile });
-    setLoading(false);
     return res;
   };
 
   const register = async (userData) => {
-    setLoading(true);
     const res = await apiRequest('/auth/register', 'POST', userData);
-    setLoading(false);
 
     if (res.success) {
       setUser(res.user);
