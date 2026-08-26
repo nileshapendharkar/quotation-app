@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
   },
   scrollGrow: {
     flexGrow: 1,
-    justifyContent: 'center',
   },
   background: {
     flex: 1,
@@ -191,21 +190,22 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   container: {
+    flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingVertical: 20,
   },
   brandBox: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
   },
   logo: {
-    width: 140,
-    height: 140,
+    width: 100,
+    height: 100,
     marginBottom: 10,
   },
   brandTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: '#000000',
     letterSpacing: 0.5,
