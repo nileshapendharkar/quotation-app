@@ -141,11 +141,25 @@ function MainAppNavigator() {
           />
         );
       case 'Favorite':
-        return <FavoriteScreen onNavigateHome={() => changeTab('Home')} />;
+        return (
+          <FavoriteScreen
+            onNavigateHome={() => changeTab('Home')}
+            onOpenMenu={() => setSideMenuVisible(true)}
+            onNavigateNotifications={() => changeTab('Notifications')}
+            onNavigateSearch={() => changeTab('Product')}
+          />
+        );
       case 'Cart':
-        return <CartScreen onNavigateOrders={() => changeTab('Orders')} />;
+        return (
+          <CartScreen
+            onNavigateOrders={() => changeTab('Orders')}
+            onOpenMenu={() => setSideMenuVisible(true)}
+            onNavigateNotifications={() => changeTab('Notifications')}
+            onNavigateSearch={() => changeTab('Product')}
+          />
+        );
       case 'Orders':
-        return <OrdersScreen />;
+        return <OrdersScreen onNavigateBack={() => changeTab('Home')} />;
       case 'Notifications':
         return <NotificationsScreen onNavigateBack={() => changeTab('Home')} />;
       case 'CompanyProfile':

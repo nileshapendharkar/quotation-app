@@ -7,7 +7,7 @@ import { getImageUrl } from '../api';
 
 const { width } = Dimensions.get('window');
 
-export default function FavoriteScreen({ onNavigateHome, onOpenMenu, onNavigateNotifications }) {
+export default function FavoriteScreen({ onNavigateHome, onOpenMenu, onNavigateNotifications, onNavigateSearch }) {
   const { favorites, toggleFavorite } = useContext(FavoriteContext);
   const { addToCart } = useContext(CartContext);
   const unreadNotifications = 0; // Or grab from context if available
@@ -26,7 +26,7 @@ export default function FavoriteScreen({ onNavigateHome, onOpenMenu, onNavigateN
           </TouchableOpacity>
           <Text style={styles.headerTitle}>SAVED</Text>
           <View style={styles.headerRight}>
-             <TouchableOpacity style={styles.headerIconBtn}>
+             <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateSearch}>
                <Search color="#27347a" size={24} />
              </TouchableOpacity>
              <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>

@@ -22,11 +22,11 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const unreadNotifications = 0;
 
   const banners = [
-    require('../../assets/5.jpg'),
-    require('../../assets/6.jpg'),
-    require('../../assets/7.jpg'),
-    require('../../assets/8.jpg'),
-    require('../../assets/9.jpg')
+    require('../../assets/5.png'),
+    require('../../assets/6.png'),
+    require('../../assets/7.png'),
+    require('../../assets/8.png'),
+    require('../../assets/9.png')
   ];
 
   useEffect(() => {
@@ -241,7 +241,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                   scrollEventThrottle={16}
                 >
                   {banners.map((img, idx) => (
-                    <Image key={idx} source={img} style={styles.bannerImage} resizeMode="contain" />
+                    <Image key={idx} source={img} style={styles.bannerImage} resizeMode="stretch" />
                   ))}
                 </ScrollView>
                 <View style={styles.carouselDots}>

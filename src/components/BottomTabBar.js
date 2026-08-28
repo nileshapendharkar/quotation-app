@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { Home, Palette, Bookmark, ShoppingCart, PackageCheck } from 'lucide-react-native';
 import { CartContext } from '../context/CartContext';
 
 export default function BottomTabBar({ activeTab, onTabChange }) {
@@ -8,11 +7,11 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
   const cartCount = (cartItems && cartItems.length) || 0;
 
   const tabs = [
-    { id: 'Home', label: 'HOME', isImage: false, icon: Home },
-    { id: 'Product', label: 'CATALOG', isImage: false, icon: Palette },
-    { id: 'Favorite', label: 'SAVED', isImage: false, icon: Bookmark },
-    { id: 'Cart', label: 'CART', isImage: false, icon: ShoppingCart, showBadge: true },
-    { id: 'Orders', label: 'ORDER', isImage: false, icon: PackageCheck },
+    { id: 'Home', label: 'HOME', isImage: true, source: require('../../assets/Home.png') },
+    { id: 'Product', label: 'CATALOG', isImage: true, source: require('../../assets/pantone.png') },
+    { id: 'Favorite', label: 'SAVED', isImage: true, source: require('../../assets/bookmark.png') },
+    { id: 'Cart', label: 'CART', isImage: true, source: require('../../assets/Cart.png'), showBadge: true },
+    { id: 'Orders', label: 'ORDER', isImage: true, source: require('../../assets/order.png') },
   ];
 
   return (

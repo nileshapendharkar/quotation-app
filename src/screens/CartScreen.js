@@ -8,7 +8,7 @@ import { apiRequest, getImageUrl } from '../api';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
-export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNotifications }) {
+export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNotifications, onNavigateSearch }) {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const { isFavorite, toggleFavorite } = useContext(FavoriteContext);
@@ -31,7 +31,8 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
         size: i.size || '',
         productCode: i.productCode || '',
         packing: i.packing || '',
-        uom: i.uom || 'Nos'
+        uom: i.uom || 'Nos',
+        categoryName: i.categoryName || ''
       })),
       notes: "Generated via Mobile Quotation App"
     };
@@ -103,15 +104,29 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
     if (!generatedOrder) return;
 
     try {
-      const itemsHtml = generatedOrder.items.map(item => `
+      const itemsHtml = generatedOrder.items.map(item => {
+        const categoryName = item.categoryName || '';
+        let total = 0;
+        if (categoryName.toLowerCase().includes('tank')) {
+          const parsedSize = parseFloat(item.size);
+          if (!isNaN(parsedSize)) total = parsedSize * item.quantity;
+        } else {
+          const parsedPacking = parseFloat(item.packing);
+          if (!isNaN(parsedPacking)) total = parsedPacking * item.quantity;
+        }
+
+        return `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.productCode || '-'}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.productName}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.size || '-'}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.packing || '-'}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${item.quantity} ${item.uom || 'Nos'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.uom || 'Nos'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${total || '-'}</td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
 
       const htmlContent = `
         <html>
@@ -145,11 +160,13 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
             <table>
               <thead>
                 <tr>
-                  <th>Code</th>
+                  <th>ProductCode</th>
                   <th>Product Name</th>
                   <th>Size</th>
                   <th>Packing</th>
-                  <th style="text-align: right;">Qty</th>
+                  <th style="text-align: right;">Quantity</th>
+                  <th>UOM</th>
+                  <th style="text-align: right;">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +206,7 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
           </TouchableOpacity>
           <Text style={styles.headerTitle}>CART</Text>
           <View style={styles.headerRight}>
-             <TouchableOpacity style={styles.headerIconBtn}>
+             <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateSearch}>
                <Search color="#27347a" size={24} />
              </TouchableOpacity>
              <TouchableOpacity style={styles.headerIconBtn} onPress={onNavigateNotifications}>
