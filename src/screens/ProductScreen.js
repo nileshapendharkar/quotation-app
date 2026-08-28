@@ -38,7 +38,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
         bannerRef.current.scrollTo({ x: nextIndex * width, animated: true });
       }
       setActiveBanner(nextIndex);
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(timer);
   }, [selectedCat, search, showSearch, banners.length]);
