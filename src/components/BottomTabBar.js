@@ -1,22 +1,22 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { CartContext } from '../context/CartContext';
 
-export default function BottomTabBar({ activeTab, onTabChange }) {
+const TABS = [
+  { id: 'Home', label: 'HOME', isImage: true, source: require('../../assets/Home.png') },
+  { id: 'Product', label: 'CATALOG', isImage: true, source: require('../../assets/pantone.png') },
+  { id: 'Favorite', label: 'SAVED', isImage: true, source: require('../../assets/bookmark.png') },
+  { id: 'Cart', label: 'CART', isImage: true, source: require('../../assets/Cart.png'), showBadge: true },
+  { id: 'Orders', label: 'ORDER', isImage: true, source: require('../../assets/order.png') },
+];
+
+function BottomTabBar({ activeTab, onTabChange }) {
   const { cartItems } = useContext(CartContext);
   const cartCount = (cartItems && cartItems.length) || 0;
 
-  const tabs = [
-    { id: 'Home', label: 'HOME', isImage: true, source: require('../../assets/Home.png') },
-    { id: 'Product', label: 'CATALOG', isImage: true, source: require('../../assets/pantone.png') },
-    { id: 'Favorite', label: 'SAVED', isImage: true, source: require('../../assets/bookmark.png') },
-    { id: 'Cart', label: 'CART', isImage: true, source: require('../../assets/Cart.png'), showBadge: true },
-    { id: 'Orders', label: 'ORDER', isImage: true, source: require('../../assets/order.png') },
-  ];
-
   return (
     <View style={styles.container}>
-      {tabs.map((tab) => {
+      {TABS.map((tab) => {
         const IconComponent = tab.icon;
         const isActive = activeTab === tab.id;
         return (
@@ -57,6 +57,8 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
     </View>
   );
 }
+
+export default React.memo(BottomTabBar);
 
 const styles = StyleSheet.create({
   container: {

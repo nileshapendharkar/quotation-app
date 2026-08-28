@@ -2,6 +2,7 @@ import { productImages } from '../utils/imageMapping';
 import { apiCircuitBreaker } from './CircuitBreaker';
 
 const API_BASE_URL = 'https://quotation-app-backend.onrender.com/api';
+const IMAGE_BASE_URL = API_BASE_URL.replace('/api', '');
 
 let userToken = null;
 
@@ -22,8 +23,7 @@ export const getImageUrl = (path) => {
     return productImages[path];
   }
   
-  const baseUrl = API_BASE_URL.replace('/api', '');
-  return { uri: `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}` };
+  return { uri: `${IMAGE_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}` };
 };
 
 export const apiRequest = async (endpoint, method = 'GET', body = null) => {

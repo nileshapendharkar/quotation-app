@@ -7,6 +7,15 @@ import { CartContext } from '../context/CartContext';
 
 const { width } = Dimensions.get('window');
 
+// Module-level constants — avoid recreating on every render
+const BANNERS = [
+  require('../../assets/5.png'),
+  require('../../assets/6.png'),
+  require('../../assets/7.png'),
+  require('../../assets/8.png'),
+  require('../../assets/9.png')
+];
+
 export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateNotifications }) {
   const { addToCart } = useContext(CartContext);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -21,19 +30,11 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
 
   const unreadNotifications = 0;
 
-  const banners = [
-    require('../../assets/5.png'),
-    require('../../assets/6.png'),
-    require('../../assets/7.png'),
-    require('../../assets/8.png'),
-    require('../../assets/9.png')
-  ];
-
   useEffect(() => {
     if (selectedCat || search || showSearch) return;
 
     const timer = setInterval(() => {
-      const nextIndex = (activeBannerRef.current + 1) % banners.length;
+      const nextIndex = (activeBannerRef.current + 1) % BANNERS.length;
       if (bannerRef.current) {
         bannerRef.current.scrollTo({ x: nextIndex * width, animated: true });
       }
@@ -41,7 +42,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [selectedCat, search, showSearch, banners.length]);
+  }, [selectedCat, search, showSearch]);
 
   const [categories, setCategories] = useState([
     { id: '', name: 'All Groups', image: null },
@@ -68,6 +69,15 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const [selectedCat, setSelectedCat] = useState('');
   const [selectedSubCat, setSelectedSubCat] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search input — only fire API call after 300ms pause
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     fetchBackendCategories();
@@ -76,7 +86,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
 
   useEffect(() => {
     fetchBackendData();
-  }, [selectedCat, selectedSubCat, search]);
+  }, [selectedCat, selectedSubCat, debouncedSearch]);
 
   useEffect(() => {
     const onBackPress = () => {
@@ -121,7 +131,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     let url = '/products?';
     if (selectedCat) url += `categoryId=${selectedCat}&`;
     if (selectedSubCat) url += `subcategoryId=${selectedSubCat}&`;
-    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (debouncedSearch) url += `search=${encodeURIComponent(debouncedSearch)}&`;
 
     const res = await apiRequest(url);
     if (res.success && res.products) {
@@ -129,14 +139,8 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     }
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter(p => {
-      const matchesCat = !selectedCat || p.categoryId === selectedCat;
-      const matchesSubCat = !selectedSubCat || p.subcategoryId === selectedSubCat;
-      const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
-      return matchesCat && matchesSubCat && matchesSearch;
-    });
-  }, [products, selectedCat, selectedSubCat, search]);
+  // Server already filters — no need for redundant client-side filtering
+  // Just use `products` directly
 
   const handleSelectCategory = useCallback((catId) => {
     setSelectedCat(catId);
@@ -148,7 +152,10 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     setSelectedSubCat(subCatId);
   }, []);
 
-  const currentSubCats = subCategories.filter(sc => sc.categoryId === selectedCat);
+  const currentSubCats = useMemo(() => 
+    subCategories.filter(sc => sc.categoryId === selectedCat),
+    [subCategories, selectedCat]
+  );
   const showSubCategories = selectedCat && !selectedSubCat && !search && currentSubCats.length > 0;
 
   const handleOpenProductDetail = useCallback((product) => {
@@ -172,12 +179,21 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     }, 1200);
   };
 
-  const handleBannerScroll = (event) => {
+  const handleBannerScroll = useCallback((event) => {
     const slide = Math.ceil(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width - 0.1);
-    if (slide !== activeBanner) {
+    if (slide !== activeBannerRef.current) {
       setActiveBanner(slide);
     }
-  };
+  }, []);
+
+  // FlatList renderItem for virtualized product grid
+  const renderProductItem = useCallback(({ item }) => (
+    <View style={styles.gridItemWrapper}>
+      <ProductCard product={item} onSelect={handleOpenProductDetail} />
+    </View>
+  ), [handleOpenProductDetail]);
+
+  const productKeyExtractor = useCallback((item) => item.id, []);
 
   return (
     <ImageBackground
@@ -242,12 +258,12 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                   onScroll={handleBannerScroll}
                   scrollEventThrottle={16}
                 >
-                  {banners.map((img, idx) => (
+                  {BANNERS.map((img, idx) => (
                     <Image key={idx} source={img} style={styles.bannerImage} resizeMode="stretch" />
                   ))}
                 </ScrollView>
                 <View style={styles.carouselDots}>
-                  {banners.map((_, idx) => (
+                  {BANNERS.map((_, idx) => (
                     <View key={idx} style={[styles.dot, activeBanner === idx && styles.activeDot]} />
                   ))}
                 </View>
@@ -325,21 +341,26 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
             </View>
           )}
 
-          {/* Products Grid (if category is selected or search is active) */}
+          {/* Products Grid — FlatList for virtualized rendering */}
           {(selectedCat || search || showSearch) && (
             <View style={styles.gridContainer}>
-              {filteredProducts.length === 0 ? (
+              {products.length === 0 ? (
                 <View style={styles.emptyBox}>
                   <Text style={styles.emptyText}>No matching quotation products found.</Text>
                 </View>
               ) : (
-                <View style={styles.productsGrid}>
-                  {filteredProducts.map(item => (
-                    <View key={item.id} style={styles.gridItemWrapper}>
-                      <ProductCard product={item} onSelect={handleOpenProductDetail} />
-                    </View>
-                  ))}
-                </View>
+                <FlatList
+                  data={products}
+                  renderItem={renderProductItem}
+                  keyExtractor={productKeyExtractor}
+                  numColumns={2}
+                  scrollEnabled={false}
+                  contentContainerStyle={styles.productsGrid}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={10}
+                  windowSize={5}
+                  initialNumToRender={6}
+                />
               )}
             </View>
           )}
@@ -701,12 +722,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   productsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    paddingBottom: 10,
   },
   gridItemWrapper: {
-    width: '50%',
+    flex: 1,
     padding: 6,
   },
   emptyBox: {
