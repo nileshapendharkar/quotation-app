@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useMemo, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, ScrollView, Image, Modal, BackHandler, ImageBackground, SafeAreaView, Dimensions } from 'react-native';
 import { Menu, Search, Filter, Shield, Plus, Minus, X, Check, Bell } from 'lucide-react-native';
 import ProductCard from '../components/ProductCard';
@@ -129,32 +129,34 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     }
   };
 
-  const filteredProducts = products.filter(p => {
-    const matchesCat = !selectedCat || p.categoryId === selectedCat;
-    const matchesSubCat = !selectedSubCat || p.subcategoryId === selectedSubCat;
-    const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
-    return matchesCat && matchesSubCat && matchesSearch;
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesCat = !selectedCat || p.categoryId === selectedCat;
+      const matchesSubCat = !selectedSubCat || p.subcategoryId === selectedSubCat;
+      const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
+      return matchesCat && matchesSubCat && matchesSearch;
+    });
+  }, [products, selectedCat, selectedSubCat, search]);
 
-  const handleSelectCategory = (catId) => {
+  const handleSelectCategory = useCallback((catId) => {
     setSelectedCat(catId);
     setSelectedSubCat('');
     setShowSearch(false);
-  };
+  }, []);
 
-  const handleSelectSubCategory = (subCatId) => {
+  const handleSelectSubCategory = useCallback((subCatId) => {
     setSelectedSubCat(subCatId);
-  };
+  }, []);
 
   const currentSubCats = subCategories.filter(sc => sc.categoryId === selectedCat);
   const showSubCategories = selectedCat && !selectedSubCat && !search && currentSubCats.length > 0;
 
-  const handleOpenProductDetail = (product) => {
+  const handleOpenProductDetail = useCallback((product) => {
     setSelectedProduct(product);
     setQty(1);
     setSelectedSize(product.sizes && product.sizes.length > 0 ? product.sizes[0] : '');
     setSuccessMsg(false);
-  };
+  }, []);
 
   const handleConfirmAddToCart = () => {
     if (!selectedProduct) return;

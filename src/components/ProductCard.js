@@ -5,7 +5,7 @@ import { FavoriteContext } from '../context/FavoriteContext';
 import { CartContext } from '../context/CartContext';
 import { getImageUrl } from '../api';
 
-export default function ProductCard({ product, onSelect }) {
+function ProductCard({ product, onSelect }) {
   const { toggleFavorite, isFavorite } = useContext(FavoriteContext);
   const { addToCart } = useContext(CartContext);
 
@@ -44,6 +44,8 @@ export default function ProductCard({ product, onSelect }) {
     </View>
   );
 }
+
+export default React.memo(ProductCard);
 
 const styles = StyleSheet.create({
   card: {
