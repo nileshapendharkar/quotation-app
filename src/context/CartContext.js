@@ -31,6 +31,8 @@ const findSizeKey = (sizeMap, querySize) => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [activeDraftId, setActiveDraftId] = useState(null);
+  const [activeDraftNo, setActiveDraftNo] = useState(null);
 
   const addToCart = useCallback((product, quantity = 1, size = '') => {
     const itemSize = size || '';
@@ -89,15 +91,41 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
+    setActiveDraftId(null);
+    setActiveDraftNo(null);
+  }, []);
+
+  const loadDraft = useCallback((draft) => {
+    if (!draft || !draft.items) return;
+    const items = draft.items.map(item => ({
+      productId: item.productId,
+      productName: item.productName,
+      image: item.image,
+      categoryName: item.categoryName,
+      subCategoryName: item.subCategoryName || '',
+      quantity: item.quantity,
+      size: item.size,
+      productCode: item.productCode || '',
+      packing: item.packing || '',
+      uom: item.uom || 'Nos'
+    }));
+    setCartItems(items);
+    setActiveDraftId(draft.id);
+    setActiveDraftNo(draft.draftNo);
   }, []);
 
   const contextValue = useMemo(() => ({
     cartItems,
+    activeDraftId,
+    activeDraftNo,
+    setActiveDraftId,
+    setActiveDraftNo,
     addToCart,
     updateQuantity,
     removeFromCart,
-    clearCart
-  }), [cartItems, addToCart, updateQuantity, removeFromCart, clearCart]);
+    clearCart,
+    loadDraft
+  }), [cartItems, activeDraftId, activeDraftNo, addToCart, updateQuantity, removeFromCart, clearCart, loadDraft]);
 
   return (
     <CartContext.Provider value={contextValue}>

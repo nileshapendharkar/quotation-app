@@ -9,15 +9,47 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 
 export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNotifications, onNavigateSearch }) {
-  const { cartItems, updateQuantity, removeFromCart, clearCart } = useContext(CartContext);
+  const { cartItems, updateQuantity, removeFromCart, clearCart, activeDraftId, activeDraftNo, loadDraft } = useContext(CartContext);
   const { user } = useContext(AuthContext);
   const { isFavorite, toggleFavorite } = useContext(FavoriteContext);
 
   const [pdfModalVisible, setPdfModalVisible] = useState(false);
   const [generatedOrder, setGeneratedOrder] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const unreadNotifications = 0; // Grab from context if available
+
+  const handleSaveDraft = async () => {
+    if (cartItems.length === 0) return;
+
+    setSavingDraft(true);
+    const draftData = {
+      id: activeDraftId,
+      items: cartItems.map(i => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        size: i.size || ''
+      })),
+      notes: "Saved draft quotation"
+    };
+
+    const res = await apiRequest('/drafts/save', 'POST', draftData);
+    setSavingDraft(false);
+
+    if (res.success && res.draft) {
+      Alert.alert(
+        'Draft Saved',
+        `Draft quotation ${res.draft.draftNo} has been saved successfully! You can access it from 'Saved Drafts' in the sidebar menu.`,
+        [{ text: 'OK' }]
+      );
+      if (loadDraft) {
+        loadDraft(res.draft);
+      }
+    } else {
+      Alert.alert('Error', res.message || 'Failed to save draft. Please try again.');
+    }
+  };
 
   const handleGenerateQuotation = async () => {
     if (cartItems.length === 0) return;
@@ -34,7 +66,7 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
         uom: i.uom || 'Nos',
         categoryName: i.categoryName || ''
       })),
-      notes: "Generated via Mobile Quotation App"
+      notes: activeDraftNo ? `Generated from Draft ${activeDraftNo}` : "Generated via Mobile Quotation App"
     };
 
     const res = await apiRequest('/orders/create', 'POST', orderData);
@@ -43,6 +75,11 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
     if (res.success && res.order) {
       setGeneratedOrder(res.order);
       setPdfModalVisible(true);
+      
+      // Delete the draft if we were editing a draft
+      if (activeDraftId) {
+        await apiRequest(`/drafts/${activeDraftId}`, 'DELETE');
+      }
       clearCart();
     } else {
       // Fallback mock order if backend offline
@@ -58,6 +95,11 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
       };
       setGeneratedOrder(mockOrder);
       setPdfModalVisible(true);
+
+      // Delete local/mock draft too if active
+      if (activeDraftId) {
+        await apiRequest(`/drafts/${activeDraftId}`, 'DELETE');
+      }
       clearCart();
     }
   };
@@ -220,6 +262,29 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
           </View>
         </View>
 
+        {activeDraftNo && (
+          <View style={styles.draftBanner}>
+            <View style={styles.draftBannerContent}>
+              <Text style={styles.draftBannerText}>📝 Editing Draft: {activeDraftNo}</Text>
+              <TouchableOpacity 
+                style={styles.discardBtn} 
+                onPress={() => {
+                  Alert.alert(
+                    'Discard Draft Edits',
+                    'Are you sure you want to stop editing this draft? This will clear the cart.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Discard', style: 'destructive', onPress: clearCart }
+                    ]
+                  );
+                }}
+              >
+                <Text style={styles.discardBtnText}>Discard</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {cartItems.length === 0 ? (
           <View style={styles.emptyBox}>
             <ShoppingBag size={48} color="#27347a" />
@@ -290,10 +355,20 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.generateBtn} onPress={handleGenerateQuotation} disabled={submitting}>
-                <Lightbulb size={20} color="#ffffff" />
+              <TouchableOpacity 
+                style={styles.draftBtn} 
+                onPress={handleSaveDraft} 
+                disabled={savingDraft || submitting}
+              >
+                <Text style={styles.draftText}>
+                  {savingDraft ? 'Saving...' : 'Save Draft'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.generateBtn} onPress={handleGenerateQuotation} disabled={submitting || savingDraft}>
+                <Lightbulb size={16} color="#ffffff" />
                 <Text style={styles.generateText}>
-                  {submitting ? 'Generating...' : 'Generate Quotation'}
+                  {submitting ? 'Generating...' : 'Generate'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -547,9 +622,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   cancelBtn: {
     flex: 1,
@@ -561,23 +636,64 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  draftBtn: {
+    flex: 1.2,
+    height: 40,
+    borderRadius: 4,
+    backgroundColor: '#f59e0b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  draftText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '600',
   },
   generateBtn: {
-    flex: 2,
+    flex: 1.5,
     height: 40,
     borderRadius: 4,
     backgroundColor: '#38bdf8',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   generateText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
+  },
+  draftBanner: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(245, 158, 11, 0.3)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  draftBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  draftBannerText: {
+    color: '#b45309',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  discardBtn: {
+    backgroundColor: '#b45309',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  discardBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   emptyBox: {
     flex: 1,

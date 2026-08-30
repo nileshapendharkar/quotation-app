@@ -22,6 +22,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [successMsg, setSuccessMsg] = useState(false);
+  const [lastAddedInfo, setLastAddedInfo] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [activeBanner, setActiveBanner] = useState(0);
   const bannerRef = useRef(null);
@@ -51,12 +52,13 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
     { id: 'cat_upvc', name: 'UPVC Pipes & Fittings', image: '/images/categories/cat_upvc.png' },
     { id: 'cat_swr', name: 'SWR Drainage Pipes & Fittings', image: '/images/categories/cat_swr.png' },
     { id: 'cat_casing', name: 'UPVC CASING PIPES', image: '/images/categories/cat_casing.png' },
-    { id: 'cat_agri', name: 'Agriculture Pipes & Fittings', image: 'https://www.ganeshgouriindustries.com/images/index/new-product/Agri-Pipes.png' },
+    { id: 'cat_agri', name: 'Agriculture Pipes & Fittings', image: '/images/categories/cat_agri.png' },
     { id: 'cat_hdpe', name: 'HDPE PIPE & FITTINGS', image: '/images/categories/cat_hdpe.png' },
     { id: 'cat_sprinkler', name: 'Sprinkler Pipes & Fittings', image: '/images/categories/cat_sprinkler.png' },
     { id: 'cat_column', name: 'UPVC COLUMN PIPES', image: '/images/categories/cat_column.png' },
     { id: 'cat_sanitary', name: 'Toilet Seat Cover & Flushing Cistern', image: 'https://www.ganeshgouriindustries.com/images/index/SANITARY-WARE.png' },
     { id: 'cat_eco_drainage', name: 'Eco Drainage Pipes', image: '/images/categories/cat_eco_drainage.png' },
+    { id: 'cat_dwc', name: 'DWC', image: '/images/categories/cat_dwc.png' },
     { id: 'cat_garden', name: 'Garden, Braided & LDPE Pipes', image: '/images/categories/cat_garden.png' },
     { id: 'cat_solvent', name: 'Solvent Cement & Lubricants', image: 'https://www.ganeshgouriindustries.com/assets/img/product/solvent-cement.webp' },
     { id: 'cat_drip', name: 'DRIP IRRIGATION SYSTEM', image: '/images/categories/cat_drip.png' },
@@ -123,7 +125,16 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
   const fetchBackendCategories = async () => {
     const res = await apiRequest('/categories');
     if (res.success && res.categories && res.categories.length > 0) {
-      setCategories([{ id: '', name: 'All Groups', image: null }, ...res.categories]);
+      setCategories(prev => {
+        const merged = [...res.categories];
+        // Ensure any local categories like DWC are preserved if missing from backend server response
+        prev.forEach(localCat => {
+          if (localCat.id && !merged.some(c => c.id === localCat.id)) {
+            merged.push(localCat);
+          }
+        });
+        return [{ id: '', name: 'All Groups', image: null }, ...merged];
+      });
     }
   };
 
@@ -172,11 +183,15 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
       return;
     }
     addToCart(selectedProduct, qty, selectedSize);
+    const sizeLabel = selectedSize ? `${qty}× ${selectedSize}` : `${qty}× item`;
+    setLastAddedInfo(sizeLabel);
     setSuccessMsg(true);
+    // Keep the modal open — just reset after a brief success flash so the user
+    // can pick another size and add again. The user closes manually via X / back.
     setTimeout(() => {
-      setSelectedProduct(null);
       setSuccessMsg(false);
-    }, 1200);
+      setQty(1);
+    }, 1500);
   };
 
   const handleBannerScroll = useCallback((event) => {
@@ -504,7 +519,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                   {successMsg ? (
                     <View style={styles.successMessageBtn}>
                       <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                      <Text style={styles.successMessageText}>Added to Quote Cart!</Text>
+                      <Text style={styles.successMessageText}>Added {lastAddedInfo} to Cart!</Text>
                     </View>
                   ) : (
                     <TouchableOpacity style={styles.confirmAddBtn} onPress={handleConfirmAddToCart}>
@@ -683,40 +698,53 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   categoryText: {
-    fontSize: 9.5,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#0f172a',
     textAlign: 'center',
-    lineHeight: 12,
+    lineHeight: 14,
   },
   subCategorySection: {
-    paddingTop: 10,
-    marginBottom: 16,
+    paddingTop: 12,
+    marginBottom: 14,
   },
   chipScroll: {
-    paddingHorizontal: 20,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 10,
+    alignItems: 'center',
   },
   catChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
     backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderWidth: 1.5,
+    borderColor: '#cbd5e1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   catChipActive: {
-    backgroundColor: 'rgba(39, 52, 122, 0.1)',
+    backgroundColor: '#27347a',
     borderColor: '#27347a',
+    shadowColor: '#27347a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+    transform: [{ scale: 1.06 }],
   },
   catChipText: {
-    color: '#64748b',
-    fontSize: 13,
-    fontWeight: '600',
+    color: '#334155',
+    fontSize: 14,
+    fontWeight: '700',
   },
   catChipTextActive: {
-    color: '#27347a',
-    fontWeight: '800',
+    color: '#ffffff',
+    fontWeight: '900',
   },
   gridContainer: {
     paddingHorizontal: 10,

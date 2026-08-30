@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground, SafeAreaView } from 'react-native';
-import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground, SafeAreaView, ActivityIndicator } from 'react-native';
+import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft, RefreshCw } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 import { apiRequest } from '../api';
 
@@ -8,16 +8,30 @@ export default function OrdersScreen({ onNavigateBack }) {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('All');
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchOrders();
-  }, [activeTab]);
+  }, []);
 
   const fetchOrders = async () => {
-    const res = await apiRequest(`/orders/my-orders?status=${activeTab}`);
-    if (res.success && res.orders) {
-      setOrders(res.orders);
+    try {
+      const res = await apiRequest('/orders/my-orders');
+      if (res.success && res.orders) {
+        setOrders(res.orders);
+      }
+    } catch (err) {
+      console.error('Fetch orders error:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchOrders();
   };
 
   const filteredOrders = orders.filter(o => {
@@ -56,11 +70,16 @@ export default function OrdersScreen({ onNavigateBack }) {
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.topHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <TouchableOpacity onPress={onNavigateBack} style={{paddingRight: 12}}>
-                 <ArrowLeft color="#27347a" size={24} />
+            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%'}}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <TouchableOpacity onPress={onNavigateBack} style={{paddingRight: 12}}>
+                   <ArrowLeft color="#27347a" size={24} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Orders</Text>
+              </View>
+              <TouchableOpacity onPress={handleRefresh} style={{padding: 8}}>
+                <RefreshCw color="#27347a" size={20} />
               </TouchableOpacity>
-              <Text style={styles.headerTitle}>Orders</Text>
             </View>
             <Text style={styles.headerSub}>Track Status • Product Name & Qty Only</Text>
           </View>
@@ -80,7 +99,11 @@ export default function OrdersScreen({ onNavigateBack }) {
         ))}
       </View>
 
-      {filteredOrders.length === 0 ? (
+      {loading && !refreshing ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#27347a" />
+        </View>
+      ) : filteredOrders.length === 0 ? (
         <View style={styles.emptyBox}>
           <ClipboardList size={48} color="#334155" />
           <Text style={styles.emptyTitle}>No {activeTab} Orders Found</Text>
@@ -91,12 +114,20 @@ export default function OrdersScreen({ onNavigateBack }) {
           data={filteredOrders}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
           renderItem={({ item }) => (
             <View style={styles.orderCard}>
               <View style={styles.cardHeader}>
                 <View>
                   <Text style={styles.orderNo}>{item.orderNo}</Text>
-                  <Text style={styles.orderDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+                  <Text style={styles.orderDate}>{new Date(item.createdAt).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</Text>
                 </View>
                 {renderStatusBadge(item.status)}
               </View>
@@ -291,5 +322,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     marginTop: 6,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

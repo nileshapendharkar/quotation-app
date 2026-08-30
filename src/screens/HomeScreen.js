@@ -118,7 +118,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
                 <Image source={require('../../assets/1.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
-                <Text style={styles.statNumber}>05</Text>
+                <Text style={styles.statNumber}>01</Text>
                 <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
               </View>
             </TouchableOpacity>
@@ -140,7 +140,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
                 <Image source={require('../../assets/3.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
-                <Text style={styles.statNumber}>01</Text>
+                <Text style={styles.statNumber}>03</Text>
                 <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
               </View>
             </TouchableOpacity>
@@ -151,7 +151,7 @@ export default function HomeScreen({ onOpenMenu, onNavigateProduct, onNavigateOr
                 <Image source={require('../../assets/4.png')} style={styles.statImage} resizeMode="contain" />
               </View>
               <View style={styles.statBottomContent}>
-                <Text style={styles.statNumber}>01</Text>
+                <Text style={styles.statNumber}>04</Text>
                 <Text style={styles.viewAllTextSmall}>View All {'>'}</Text>
               </View>
             </TouchableOpacity>

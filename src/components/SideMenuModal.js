@@ -10,7 +10,8 @@ import {
   LogOut, 
   Trash2, 
   X,
-  Camera
+  Camera,
+  FileText
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -21,7 +22,8 @@ export default function SideMenuModal({ visible, onClose, onNavigate }) {
     { id: 'Home', label: 'Home', icon: Home },
     { id: 'Favorite', label: 'Saved', icon: Bookmark },
     { id: 'Cart', label: 'Cart', icon: ShoppingCart },
-    { id: 'Orders', label: 'Order', icon: PackageCheck },
+    { id: 'Orders', label: 'My Orders', icon: PackageCheck },
+    { id: 'Drafts', label: 'Saved Drafts', icon: FileText },
     { id: 'CompanyProfile', label: 'Company Profile', icon: Building2 },
   ];
 

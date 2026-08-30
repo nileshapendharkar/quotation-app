@@ -3,11 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { CartContext } from '../context/CartContext';
 
 const TABS = [
-  { id: 'Home', label: 'HOME', isImage: true, source: require('../../assets/Home.png') },
-  { id: 'Product', label: 'CATALOG', isImage: true, source: require('../../assets/pantone.png') },
-  { id: 'Favorite', label: 'SAVED', isImage: true, source: require('../../assets/bookmark.png') },
-  { id: 'Cart', label: 'CART', isImage: true, source: require('../../assets/Cart.png'), showBadge: true },
-  { id: 'Orders', label: 'ORDER', isImage: true, source: require('../../assets/order.png') },
+  { id: 'Home', label: 'HOME', isImage: true, activeSource: require('../../assets/Home.png'), inactiveSource: require('../../assets/Home-line.png') },
+  { id: 'Product', label: 'CATALOG', isImage: true, activeSource: require('../../assets/pantone.png'), inactiveSource: require('../../assets/catalog-line.png') },
+  { id: 'Favorite', label: 'SAVED', isImage: true, activeSource: require('../../assets/bookmark.png'), inactiveSource: require('../../assets/Saved-line.png') },
+  { id: 'Cart', label: 'CART', isImage: true, activeSource: require('../../assets/Cart.png'), inactiveSource: require('../../assets/Cart-line.png'), showBadge: true },
+  { id: 'Orders', label: 'ORDER', isImage: true, activeSource: require('../../assets/order.png'), inactiveSource: require('../../assets/order-line.png') },
 ];
 
 function BottomTabBar({ activeTab, onTabChange }) {
@@ -19,6 +19,7 @@ function BottomTabBar({ activeTab, onTabChange }) {
       {TABS.map((tab) => {
         const IconComponent = tab.icon;
         const isActive = activeTab === tab.id;
+        const iconSource = isActive ? (tab.activeSource || tab.source) : (tab.inactiveSource || tab.source);
         return (
           <TouchableOpacity
             key={tab.id}
@@ -30,7 +31,7 @@ function BottomTabBar({ activeTab, onTabChange }) {
               <View style={styles.activeTabWrapper}>
                 <View style={styles.activeCircle}>
                   {tab.isImage ? (
-                    <Image source={tab.source} style={{ width: 30, height: 30, tintColor: '#27347a' }} resizeMode="contain" />
+                    <Image source={iconSource} style={{ width: 30, height: 30, tintColor: '#27347a' }} resizeMode="contain" />
                   ) : (
                     <IconComponent size={30} color="#27347a" fill="#27347a" />
                   )}
@@ -40,7 +41,7 @@ function BottomTabBar({ activeTab, onTabChange }) {
             ) : (
               <View style={styles.inactiveIconContainer}>
                 {tab.isImage ? (
-                  <Image source={tab.source} style={{ width: 26, height: 26, tintColor: '#64748b' }} resizeMode="contain" />
+                  <Image source={iconSource} style={{ width: 26, height: 26, tintColor: '#64748b' }} resizeMode="contain" />
                 ) : (
                   <IconComponent size={26} color="#64748b" />
                 )}

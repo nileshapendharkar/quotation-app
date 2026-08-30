@@ -19,6 +19,7 @@ import OrdersScreen from './src/screens/OrdersScreen';
 import CompanyProfileScreen from './src/screens/CompanyProfileScreen';
 import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
+import DraftsScreen from './src/screens/DraftsScreen';
 
 import BottomTabBar from './src/components/BottomTabBar';
 import SideMenuModal from './src/components/SideMenuModal';
@@ -160,6 +161,14 @@ function MainAppNavigator() {
         );
       case 'Orders':
         return <OrdersScreen onNavigateBack={() => changeTab('Home')} />;
+      case 'Drafts':
+        return (
+          <DraftsScreen
+            onNavigateBack={() => changeTab('Home')}
+            onNavigateCart={() => changeTab('Cart')}
+            onOpenMenu={() => setSideMenuVisible(true)}
+          />
+        );
       case 'Notifications':
         return <NotificationsScreen onNavigateBack={() => changeTab('Home')} />;
       case 'CompanyProfile':

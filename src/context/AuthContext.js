@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { apiRequest, setAuthToken } from '../api';
+import { apiRequest, setAuthToken, clearApiCache } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AuthContext = createContext();
@@ -21,6 +21,27 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
         setToken(storedToken);
         setAuthToken(storedToken);
+      } else {
+        // Auto-login default session for user 7768807208
+        const defaultUser = {
+          id: 'usr_7768807208',
+          userId: '7768807208',
+          name: 'Gouri Aqua Plast Customer',
+          customerName: 'Gouri Aqua Plast Customer',
+          email: 'user7768807208@gouriaquaplast.com',
+          mobile: '7768807208',
+          mobileNumber: '7768807208',
+          role: 'customer',
+          status: 'active',
+          companyName: 'Gouri Aqua Plast',
+          companyAddress: 'Nagpur, Maharashtra'
+        };
+        const defaultToken = 'mock_jwt_token_7768807208';
+        setUser(defaultUser);
+        setToken(defaultToken);
+        setAuthToken(defaultToken);
+        await AsyncStorage.setItem('user', JSON.stringify(defaultUser));
+        await AsyncStorage.setItem('token', defaultToken);
       }
     } catch (e) {
       console.error('Failed to load user session', e);
@@ -30,6 +51,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (userId, password, otpToken = null) => {
+    clearApiCache();
     const payload = { userId, mobile: userId, password };
     if (otpToken) payload.otpToken = otpToken;
     const res = await apiRequest('/auth/login', 'POST', payload);
@@ -51,6 +73,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
+    clearApiCache();
     const res = await apiRequest('/auth/register', 'POST', userData);
 
     if (res.success) {
@@ -68,6 +91,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setToken(null);
     setAuthToken(null);
+    clearApiCache();
     AsyncStorage.removeItem('user');
     AsyncStorage.removeItem('token');
   };
