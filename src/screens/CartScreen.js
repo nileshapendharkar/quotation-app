@@ -492,7 +492,8 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
                             <Text style={styles.pdfItemDetails}>Size: {item.size}</Text>
                           ) : null}
                         </View>
-                        <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                        <View style={{ alignItems: 'flex-end', justifyContent: 'center', gap: 2 }}>
+                          <Text style={styles.pdfItemQty}>Qty: <Text style={{ fontWeight: '800', color: '#0f172a' }}>{item.quantity || 1}</Text></Text>
                           <Text style={styles.pdfItemUom}>UOM: <Text style={{ fontWeight: '700', color: '#0ea5e9' }}>{item.uom || 'Nos'}</Text></Text>
                           <Text style={styles.pdfItemTotal}>Total: <Text style={{ fontWeight: '800', color: '#0284c7' }}>{totalVal}</Text></Text>
                         </View>
@@ -815,6 +816,7 @@ const styles = StyleSheet.create({
   pdfItemName: { color: '#0f172a', fontSize: 13, fontWeight: '700' },
   pdfItemCategory: { color: '#64748b', fontSize: 10, marginTop: 2 },
   pdfItemDetails: { color: '#0ea5e9', fontSize: 11, marginTop: 2, fontWeight: '600' },
+  pdfItemQty: { color: '#0f172a', fontSize: 11, fontWeight: '700' },
   pdfItemUom: { color: '#475569', fontSize: 11, fontWeight: '600' },
   pdfItemTotal: { color: '#0f172a', fontSize: 12, fontWeight: '700', marginTop: 2 },
   disclaimerBox: { backgroundColor: 'rgba(16,185,129,0.1)', padding: 10, borderRadius: 8, marginBottom: 16 },
