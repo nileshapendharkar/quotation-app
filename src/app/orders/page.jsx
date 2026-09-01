@@ -162,6 +162,14 @@ export default function OrdersPage() {
                       <strong>Packing:</strong> {item.packing}
                     </span>
                   )}
+                  <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 4px', borderRadius: '4px' }}>
+                    <strong>UOM:</strong> {item.uom || 'Nos'}
+                  </span>
+                  {item.total && (
+                    <span style={{ background: '#dcfce7', color: '#166534', padding: '2px 4px', borderRadius: '4px', fontWeight: '600' }}>
+                      <strong>Total:</strong> {item.total}
+                    </span>
+                  )}
                   {item.categoryName && (
                     <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '2px 4px', borderRadius: '4px' }}>
                       {item.categoryName}
