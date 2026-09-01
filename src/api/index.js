@@ -12,12 +12,17 @@ export const API_BASE_URL = getApiBaseUrl();
 export const IMAGE_BASE_URL = API_BASE_URL.replace('/api', '');
 
 let userToken = null;
+let unauthenticatedHandler = null;
 const apiCache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL for instant response times
 
 export const getUserToken = () => userToken;
 export const setAuthToken = (token) => {
   userToken = token;
+};
+
+export const setUnauthenticatedHandler = (handler) => {
+  unauthenticatedHandler = handler;
 };
 
 export const clearApiCache = () => {
@@ -75,6 +80,9 @@ export const apiRequest = async (endpoint, method = 'GET', body = null) => {
   const action = async (signal) => {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, signal });
     if (!res.ok) {
+      if ((res.status === 401 || res.status === 403) && unauthenticatedHandler) {
+        unauthenticatedHandler();
+      }
       if (res.status >= 500) {
         throw new Error(`Server Error: ${res.status}`);
       }

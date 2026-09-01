@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { apiRequest, setAuthToken, clearApiCache } from '../api';
+import { apiRequest, setAuthToken, setUnauthenticatedHandler, clearApiCache } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AuthContext = createContext();
@@ -10,6 +10,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setUnauthenticatedHandler(() => {
+      logout();
+    });
     loadUser();
   }, []);
 
@@ -17,34 +20,30 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedUser = await AsyncStorage.getItem('user');
       const storedToken = await AsyncStorage.getItem('token');
+      
       if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
-        setToken(storedToken);
         setAuthToken(storedToken);
-      } else {
-        // Auto-login default session for user 7768807208
-        const defaultUser = {
-          id: 'usr_7768807208',
-          userId: '7768807208',
-          name: 'Gouri Aqua Plast Customer',
-          customerName: 'Gouri Aqua Plast Customer',
-          email: 'user7768807208@gouriaquaplast.com',
-          mobile: '7768807208',
-          mobileNumber: '7768807208',
-          role: 'customer',
-          status: 'active',
-          companyName: 'Gouri Aqua Plast',
-          companyAddress: 'Nagpur, Maharashtra'
-        };
-        const defaultToken = 'mock_jwt_token_7768807208';
-        setUser(defaultUser);
-        setToken(defaultToken);
-        setAuthToken(defaultToken);
-        await AsyncStorage.setItem('user', JSON.stringify(defaultUser));
-        await AsyncStorage.setItem('token', defaultToken);
+        // Verify JWT token with backend
+        const res = await apiRequest('/auth/profile', 'GET');
+        if (res && res.success && res.user) {
+          setUser(res.user);
+          setToken(storedToken);
+          await AsyncStorage.setItem('user', JSON.stringify(res.user));
+          return;
+        }
       }
+
+      // If token is missing, invalid, or expired -> redirect directly to LOGIN
+      setUser(null);
+      setToken(null);
+      setAuthToken(null);
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('token');
     } catch (e) {
       console.error('Failed to load user session', e);
+      setUser(null);
+      setToken(null);
+      setAuthToken(null);
     } finally {
       setLoading(false);
     }
