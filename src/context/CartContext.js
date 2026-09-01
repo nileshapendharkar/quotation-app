@@ -4,26 +4,18 @@ export const CartContext = createContext();
 
 const findSizeKey = (sizeMap, querySize) => {
   if (!sizeMap || !querySize) return null;
-  const normalizedQuery = String(querySize).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const query = String(querySize).trim().toLowerCase();
+  const normalizedQuery = query.replace(/[^a-z0-9]/g, '');
   
   // Try exact match first
   for (const key of Object.keys(sizeMap)) {
-    if (key.toLowerCase() === querySize.toLowerCase()) return key;
+    if (key.trim().toLowerCase() === query) return key;
   }
   
   // Try normalized match (e.g. "500l" vs "500l")
   for (const key of Object.keys(sizeMap)) {
-    const normKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normKey = key.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     if (normKey === normalizedQuery) return key;
-  }
-  
-  // Try matching digits only (e.g. "500" vs "500L")
-  const digitsQuery = normalizedQuery.replace(/[^0-9]/g, '');
-  if (digitsQuery) {
-    for (const key of Object.keys(sizeMap)) {
-      const digitsKey = key.toLowerCase().replace(/[^0-9]/g, '');
-      if (digitsKey === digitsQuery) return key;
-    }
   }
   
   return null;
@@ -35,21 +27,33 @@ export const CartProvider = ({ children }) => {
   const [activeDraftNo, setActiveDraftNo] = useState(null);
 
   const addToCart = useCallback((product, quantity = 1, size = '') => {
-    const itemSize = size || '';
+    const itemSize = String(size || '').trim();
     const matchedSizeKey = product.sizeProductCodes ? findSizeKey(product.sizeProductCodes, itemSize) : null;
     const matchedPackKey = product.packSizes ? findSizeKey(product.packSizes, itemSize) : null;
-    const finalSize = matchedSizeKey || itemSize;
+    const finalSize = itemSize; // Preserve exact selected size string
 
     setCartItems(prev => {
+      // Strictly match both Product ID AND exact Size string
       const existingIdx = prev.findIndex(item => 
         (item.productId === product.id || item.productId === product.productId) &&
-        (item.size === finalSize || (!item.size && !finalSize))
+        String(item.size || '').trim().toLowerCase() === finalSize.toLowerCase()
       );
       if (existingIdx >= 0) {
         const updated = [...prev];
-        updated[existingIdx].quantity += quantity;
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          quantity: updated[existingIdx].quantity + quantity
+        };
         return updated;
       } else {
+        const productCode = (matchedSizeKey && product.sizeProductCodes[matchedSizeKey])
+          || (product.sizeProductCodes && product.sizeProductCodes[finalSize])
+          || product.productCode || product.code || '';
+
+        const packing = (matchedPackKey && product.packSizes[matchedPackKey])
+          || (product.packSizes && product.packSizes[finalSize])
+          || product.packing || product.packSize || '';
+
         return [
           ...prev,
           {
@@ -60,8 +64,8 @@ export const CartProvider = ({ children }) => {
             subCategoryName: product.subCategoryName || product.subcategoryId || '',
             quantity: quantity,
             size: finalSize,
-            productCode: matchedSizeKey ? (product.sizeProductCodes[matchedSizeKey] || '') : '',
-            packing: matchedPackKey ? (product.packSizes[matchedPackKey] || '') : (product.packing || product.packSize || ''),
+            productCode: productCode,
+            packing: packing,
             uom: product.uom || 'Nos'
           }
         ];
@@ -70,10 +74,10 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const updateQuantity = useCallback((productId, delta, size = '') => {
-    const itemSize = size || '';
+    const itemSize = String(size || '').trim().toLowerCase();
     setCartItems(prev => {
       return prev.map(item => {
-        if (item.productId === productId && (item.size === itemSize || (!item.size && !itemSize))) {
+        if (item.productId === productId && String(item.size || '').trim().toLowerCase() === itemSize) {
           const newQty = item.quantity + delta;
           return newQty > 0 ? { ...item, quantity: newQty } : null;
         }
@@ -83,9 +87,9 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const removeFromCart = useCallback((productId, size = '') => {
-    const itemSize = size || '';
+    const itemSize = String(size || '').trim().toLowerCase();
     setCartItems(prev => prev.filter(item => 
-      !(item.productId === productId && (item.size === itemSize || (!item.size && !itemSize)))
+      !(item.productId === productId && String(item.size || '').trim().toLowerCase() === itemSize)
     ));
   }, []);
 

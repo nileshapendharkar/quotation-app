@@ -388,12 +388,12 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
         visible={!!selectedProduct}
         animationType="fade"
         transparent={true}
-        onRequestClose={() => !successMsg && setSelectedProduct(null)}
+        onRequestClose={() => setSelectedProduct(null)}
       >
         <TouchableOpacity 
           style={styles.modalOverlay} 
           activeOpacity={1} 
-          onPress={() => !successMsg && setSelectedProduct(null)}
+          onPress={() => setSelectedProduct(null)}
         >
           <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
             {selectedProduct && (
@@ -409,11 +409,20 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                   </View>
                   <TouchableOpacity 
                     style={styles.closeModalBtn} 
-                    onPress={() => !successMsg && setSelectedProduct(null)}
+                    onPress={() => setSelectedProduct(null)}
                   >
                     <X size={20} color="#64748b" />
                   </TouchableOpacity>
                 </View>
+
+                {successMsg && (
+                  <View style={{ backgroundColor: '#10b981', padding: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                    <Check size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                    <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
+                      Added {lastAddedInfo} to Cart! Select another size to add more.
+                    </Text>
+                  </View>
+                )}
 
                 <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
                   <Image source={getImageUrl(selectedProduct.image)} style={styles.modalImage} resizeMode="contain" />
@@ -428,7 +437,7 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                             <TouchableOpacity
                               key={i}
                               style={[styles.sizeSelectorChip, isSel && styles.sizeSelectorChipActive]}
-                              onPress={() => !successMsg && setSelectedSize(sz)}
+                              onPress={() => setSelectedSize(sz)}
                             >
                               <Text style={[styles.sizeSelectorChipText, isSel && styles.sizeSelectorChipTextActive]}>
                                 {sz}
@@ -498,17 +507,17 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                   <View style={styles.qtySection}>
                     <Text style={styles.modalSectionTitle}>Configure Quantity</Text>
                     <View style={styles.stepperContainer}>
-                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => Math.max(1, prev - 10))}>
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => setQty(prev => Math.max(1, prev - 10))}>
                         <Text style={styles.stepperBtnTxt}>-10</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => Math.max(1, prev - 1))}>
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => setQty(prev => Math.max(1, prev - 1))}>
                         <Minus size={14} color="#0f172a" />
                       </TouchableOpacity>
                       <Text style={styles.stepperValue}>{qty}</Text>
-                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => prev + 1)}>
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => setQty(prev => prev + 1)}>
                         <Plus size={14} color="#0f172a" />
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.stepperBtn} onPress={() => !successMsg && setQty(prev => prev + 10)}>
+                      <TouchableOpacity style={styles.stepperBtn} onPress={() => setQty(prev => prev + 10)}>
                         <Text style={styles.stepperBtnTxt}>+10</Text>
                       </TouchableOpacity>
                     </View>
@@ -516,16 +525,9 @@ export default function ProductScreen({ onOpenMenu, onSelectProduct, onNavigateN
                 </ScrollView>
 
                 <View style={styles.modalFooter}>
-                  {successMsg ? (
-                    <View style={styles.successMessageBtn}>
-                      <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                      <Text style={styles.successMessageText}>Added {lastAddedInfo} to Cart!</Text>
-                    </View>
-                  ) : (
-                    <TouchableOpacity style={styles.confirmAddBtn} onPress={handleConfirmAddToCart}>
-                      <Text style={styles.confirmAddBtnText}>Add to Quote Cart</Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity style={styles.confirmAddBtn} onPress={handleConfirmAddToCart}>
+                    <Text style={styles.confirmAddBtnText}>Add to Quote Cart</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
