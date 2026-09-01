@@ -1,12 +1,13 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Modal, Alert, Linking, ImageBackground, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Modal, Alert, Linking, ImageBackground, SafeAreaView, Platform } from 'react-native';
 import { ShoppingBag, Plus, Minus, Trash2, FileCheck, X, Share2, Download, Menu, Search, Bell, Bookmark, Lightbulb } from 'lucide-react-native';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { FavoriteContext } from '../context/FavoriteContext';
-import { apiRequest, getImageUrl } from '../api';
+import { apiRequest, getImageUrl, API_BASE_URL, getUserToken } from '../api';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNotifications, onNavigateSearch }) {
   const { cartItems, updateQuantity, removeFromCart, clearCart, activeDraftId, activeDraftNo, loadDraft } = useContext(CartContext);
@@ -145,6 +146,64 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
   const handleDownloadPDF = async () => {
     if (!generatedOrder) return;
 
+    const token = getUserToken();
+    const orderId = generatedOrder.id;
+    const downloadUrl = `${API_BASE_URL}/orders/download-pdf/${orderId}`;
+    const filename = `Quotation_${generatedOrder.orderNo || 'PDF'}.pdf`;
+
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.document) {
+        // Direct Web Download matching Admin Panel behavior
+        const res = await fetch(downloadUrl, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error('Failed to fetch PDF from server');
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      // Native Mobile Download (Android / iOS)
+      if (orderId && !orderId.startsWith('ord_1')) {
+        const fileUri = `${FileSystem.documentDirectory}${filename}`;
+        const downloadRes = await FileSystem.downloadAsync(
+          downloadUrl,
+          fileUri,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          }
+        );
+
+        if (downloadRes.status === 200) {
+          const isSharingAvailable = await Sharing.isAvailableAsync();
+          if (isSharingAvailable) {
+            await Sharing.shareAsync(downloadRes.uri, {
+              UTI: '.pdf',
+              mimeType: 'application/pdf',
+              dialogTitle: `Download ${filename}`
+            });
+          } else {
+            Alert.alert('Download Complete', `PDF saved to ${downloadRes.uri}`);
+          }
+          return;
+        }
+      }
+
+      // Fallback HTML client-side print if mock order or backend offline
+      await generateFallbackHTMLPDF();
+    } catch (err) {
+      console.warn('Backend PDF download error, attempting fallback print:', err);
+      await generateFallbackHTMLPDF();
+    }
+  };
+
+  const generateFallbackHTMLPDF = async () => {
     try {
       const itemsHtml = generatedOrder.items.map(item => {
         const categoryName = item.categoryName || '';
@@ -165,7 +224,7 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.packing || '-'}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${item.quantity}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">${item.uom || 'Nos'}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${total || '-'}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${total ? total.toLocaleString('en-IN') : '-'}</td>
         </tr>
       `;
       }).join('');

@@ -8,13 +8,11 @@ const getApiBaseUrl = () => {
   return 'https://quotation-app-backend.onrender.com/api';
 };
 
-const API_BASE_URL = getApiBaseUrl();
-const IMAGE_BASE_URL = API_BASE_URL.replace('/api', '');
+export const API_BASE_URL = getApiBaseUrl();
+export const IMAGE_BASE_URL = API_BASE_URL.replace('/api', '');
 
 let userToken = null;
-const apiCache = new Map();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL for instant response times
-
+export const getUserToken = () => userToken;
 export const setAuthToken = (token) => {
   userToken = token;
 };

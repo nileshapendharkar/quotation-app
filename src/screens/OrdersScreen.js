@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground, SafeAreaView, ActivityIndicator } from 'react-native';
-import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft, RefreshCw } from 'lucide-react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground, SafeAreaView, ActivityIndicator, Alert, Platform } from 'react-native';
+import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft, RefreshCw, Download } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
-import { apiRequest } from '../api';
+import { apiRequest, API_BASE_URL, getUserToken } from '../api';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 export default function OrdersScreen({ onNavigateBack }) {
   const { user } = useContext(AuthContext);
@@ -32,6 +34,54 @@ export default function OrdersScreen({ onNavigateBack }) {
   const handleRefresh = () => {
     setRefreshing(true);
     fetchOrders();
+  };
+
+  const handleDownloadOrderPDF = async (order) => {
+    if (!order || !order.id) return;
+    const token = getUserToken();
+    const downloadUrl = `${API_BASE_URL}/orders/download-pdf/${order.id}`;
+    const filename = `Quotation_${order.orderNo || 'PDF'}.pdf`;
+
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.document) {
+        const res = await fetch(downloadUrl, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error('Failed to download PDF from server');
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      const fileUri = `${FileSystem.documentDirectory}${filename}`;
+      const downloadRes = await FileSystem.downloadAsync(downloadUrl, fileUri, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      if (downloadRes.status === 200) {
+        const isSharingAvailable = await Sharing.isAvailableAsync();
+        if (isSharingAvailable) {
+          await Sharing.shareAsync(downloadRes.uri, {
+            UTI: '.pdf',
+            mimeType: 'application/pdf',
+            dialogTitle: `Download ${filename}`
+          });
+        } else {
+          Alert.alert('Download Complete', `PDF saved to ${downloadRes.uri}`);
+        }
+      } else {
+        Alert.alert('Error', 'Failed to download PDF from server.');
+      }
+    } catch (err) {
+      console.error('Download PDF error:', err);
+      Alert.alert('Error', 'Failed to download PDF.');
+    }
   };
 
   const filteredOrders = orders.filter(o => {
@@ -159,6 +209,16 @@ export default function OrdersScreen({ onNavigateBack }) {
                   </View>
                 ))}
               </View>
+
+              <View style={styles.divider} />
+              
+              <TouchableOpacity 
+                style={styles.downloadPdfBtn} 
+                onPress={() => handleDownloadOrderPDF(item)}
+              >
+                <Download size={14} color="#0ea5e9" />
+                <Text style={styles.downloadPdfBtnText}>Download PDF</Text>
+              </TouchableOpacity>
             </View>
           )}
         />
@@ -327,5 +387,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  downloadPdfBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#0ea5e9',
+    backgroundColor: '#f0f9ff',
+    alignSelf: 'flex-end',
+    gap: 6,
+  },
+  downloadPdfBtnText: {
+    color: '#0ea5e9',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
