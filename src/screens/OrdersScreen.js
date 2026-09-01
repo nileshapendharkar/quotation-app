@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground, SafeAreaView, ActivityIndicator, Alert, Platform } from 'react-native';
-import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft, RefreshCw, Download } from 'lucide-react-native';
+import { ClipboardList, Clock, CheckCircle2, XCircle, ArrowLeft, RefreshCw, Download, FileSpreadsheet } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 import { apiRequest, API_BASE_URL, getUserToken } from '../api';
 import * as Sharing from 'expo-sharing';
@@ -81,6 +81,54 @@ export default function OrdersScreen({ onNavigateBack }) {
     } catch (err) {
       console.error('Download PDF error:', err);
       Alert.alert('Error', 'Failed to download PDF.');
+    }
+  };
+
+  const handleDownloadOrderExcel = async (order) => {
+    if (!order || !order.id) return;
+    const token = getUserToken();
+    const downloadUrl = `${API_BASE_URL}/orders/download-excel/${order.id}`;
+    const filename = `Quotation_${order.orderNo || 'Excel'}.xlsx`;
+
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.document) {
+        const res = await fetch(downloadUrl, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error('Failed to download Excel from server');
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      const fileUri = `${FileSystem.documentDirectory}${filename}`;
+      const downloadRes = await FileSystem.downloadAsync(downloadUrl, fileUri, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      if (downloadRes.status === 200) {
+        const isSharingAvailable = await Sharing.isAvailableAsync();
+        if (isSharingAvailable) {
+          await Sharing.shareAsync(downloadRes.uri, {
+            UTI: 'com.microsoft.excel.xls',
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: `Download ${filename}`
+          });
+        } else {
+          Alert.alert('Download Complete', `Excel saved to ${downloadRes.uri}`);
+        }
+      } else {
+        Alert.alert('Error', 'Failed to download Excel from server.');
+      }
+    } catch (err) {
+      console.error('Download Excel error:', err);
+      Alert.alert('Error', 'Failed to download Excel.');
     }
   };
 
@@ -168,18 +216,26 @@ export default function OrdersScreen({ onNavigateBack }) {
           onRefresh={handleRefresh}
           renderItem={({ item }) => (
             <View style={styles.orderCard}>
-              <View style={styles.cardHeader}>
-                <View>
-                  <Text style={styles.orderNo}>{item.orderNo}</Text>
+              {/* Order Meta Header Grid: Date, Order No, Status */}
+              <View style={styles.cardMetaGrid}>
+                <View style={styles.metaBox}>
+                  <Text style={styles.metaLabel}>DATE</Text>
                   <Text style={styles.orderDate}>{new Date(item.createdAt).toLocaleDateString('en-IN', {
-                    day: 'numeric',
+                    day: '2-digit',
                     month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+                    year: 'numeric'
                   })}</Text>
                 </View>
-                {renderStatusBadge(item.status)}
+
+                <View style={styles.metaBox}>
+                  <Text style={styles.metaLabel}>ORDER NO.</Text>
+                  <Text style={styles.orderNo}>{item.orderNo}</Text>
+                </View>
+
+                <View style={[styles.metaBox, { alignItems: 'flex-end' }]}>
+                  <Text style={styles.metaLabel}>STATUS</Text>
+                  {renderStatusBadge(item.status)}
+                </View>
               </View>
 
               <View style={styles.divider} />
@@ -212,13 +268,17 @@ export default function OrdersScreen({ onNavigateBack }) {
 
               <View style={styles.divider} />
               
-              <TouchableOpacity 
-                style={styles.downloadPdfBtn} 
-                onPress={() => handleDownloadOrderPDF(item)}
-              >
-                <Download size={14} color="#0ea5e9" />
-                <Text style={styles.downloadPdfBtnText}>Download PDF</Text>
-              </TouchableOpacity>
+              {/* Actions Row */}
+              <View style={styles.actionsFooterRow}>
+                <Text style={styles.actionsSectionLabel}>ACTIONS</Text>
+                <TouchableOpacity 
+                  style={styles.downloadPdfBtn} 
+                  onPress={() => handleDownloadOrderPDF(item)}
+                >
+                  <Download size={14} color="#ffffff" />
+                  <Text style={styles.downloadPdfBtnText}>Download PDF</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         />
@@ -297,26 +357,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  cardHeader: {
+  cardMetaGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  metaBox: {
+    flex: 1,
+  },
+  metaLabel: {
+    color: '#94a3b8',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   orderNo: {
     color: '#0ea5e9',
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
   },
   orderDate: {
-    color: '#94a3b8',
-    fontSize: 11,
-    marginTop: 2,
+    color: '#1e293b',
+    fontSize: 12,
+    fontWeight: '700',
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 12,
     gap: 4,
   },
@@ -365,6 +435,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
+  actionsFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  actionsSectionLabel: {
+    color: '#94a3b8',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   emptyBox: {
     flex: 1,
     justifyContent: 'center',
@@ -393,17 +474,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#0ea5e9',
-    backgroundColor: '#f0f9ff',
-    alignSelf: 'flex-end',
+    backgroundColor: '#0ea5e9',
     gap: 6,
+    shadowColor: '#0ea5e9',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   downloadPdfBtnText: {
-    color: '#0ea5e9',
+    color: '#ffffff',
     fontSize: 12,
+    fontWeight: '800',
+  },
+  downloadExcelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#10b981',
+    backgroundColor: '#ecfdf5',
+    gap: 4,
+  },
+  downloadExcelBtnText: {
+    color: '#10b981',
+    fontSize: 11,
     fontWeight: '700',
   },
 });
