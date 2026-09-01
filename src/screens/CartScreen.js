@@ -399,19 +399,47 @@ export default function CartScreen({ onNavigateOrders, onOpenMenu, onNavigateNot
 
                 <Text style={styles.sectionHeading}>QUOTATION ITEMS LIST (NO PRICING)</Text>
                 <View style={styles.pdfItemsList}>
-                  {generatedOrder.items.map((item, idx) => (
-                    <View key={idx} style={styles.pdfItemRow}>
-                      <View style={{ flex: 1, paddingRight: 8 }}>
-                        <Text style={styles.pdfItemName}>{item.productName}</Text>
-                        {(item.categoryName || item.subCategoryName) && (
-                          <Text style={styles.pdfItemCategory}>
-                            {item.categoryName} {item.subCategoryName ? `› ${item.subCategoryName}` : ''}
-                          </Text>
-                        )}
+                  {generatedOrder.items.map((item, idx) => {
+                    let totalVal = '—';
+                    if (item.total && item.total !== '—') {
+                      totalVal = item.total;
+                    } else {
+                      const catName = item.categoryName || '';
+                      let numericTotal = 0;
+                      if (catName.toLowerCase().includes('tank')) {
+                        const parsedSize = parseFloat(item.size);
+                        if (!isNaN(parsedSize)) numericTotal = parsedSize * item.quantity;
+                      } else if (item.packing) {
+                        const parsedPacking = parseFloat(item.packing);
+                        if (!isNaN(parsedPacking)) numericTotal = parsedPacking * item.quantity;
+                      }
+                      if (numericTotal > 0) {
+                        totalVal = numericTotal.toLocaleString('en-IN');
+                      } else {
+                        totalVal = item.quantity ? item.quantity.toString() : '—';
+                      }
+                    }
+
+                    return (
+                      <View key={idx} style={styles.pdfItemRow}>
+                        <View style={{ flex: 1, paddingRight: 8 }}>
+                          <Text style={styles.pdfItemName}>{item.productName}</Text>
+                          {(item.categoryName || item.subCategoryName) && (
+                            <Text style={styles.pdfItemCategory}>
+                              {item.categoryName} {item.subCategoryName ? `› ${item.subCategoryName}` : ''}
+                            </Text>
+                          )}
+                          {item.size ? (
+                            <Text style={styles.pdfItemDetails}>Size: {item.size}</Text>
+                          ) : null}
+                        </View>
+                        <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                          <Text style={styles.pdfItemUom}>UOM: <Text style={{ fontWeight: '700', color: '#0ea5e9' }}>{item.uom || 'Nos'}</Text></Text>
+                          <Text style={styles.pdfItemTotal}>Total: <Text style={{ fontWeight: '800', color: '#0284c7' }}>{totalVal}</Text></Text>
+                        </View>
                       </View>
-                      <Text style={styles.pdfItemQty}>{item.quantity} {item.uom || 'Nos'}</Text>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
 
                 <View style={styles.disclaimerBox}>
@@ -724,10 +752,12 @@ const styles = StyleSheet.create({
   custSub: { color: '#64748b', fontSize: 12, marginTop: 2 },
   sectionHeading: { color: '#64748b', fontSize: 11, fontWeight: '800', marginBottom: 8 },
   pdfItemsList: { gap: 8, marginBottom: 16 },
-  pdfItemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 10, backgroundColor: '#f8fafc', borderRadius: 8 },
-  pdfItemName: { color: '#0f172a', fontSize: 13, fontWeight: '600' },
+  pdfItemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 10, backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' },
+  pdfItemName: { color: '#0f172a', fontSize: 13, fontWeight: '700' },
   pdfItemCategory: { color: '#64748b', fontSize: 10, marginTop: 2 },
-  pdfItemQty: { color: '#0ea5e9', fontSize: 13, fontWeight: '800' },
+  pdfItemDetails: { color: '#0ea5e9', fontSize: 11, marginTop: 2, fontWeight: '600' },
+  pdfItemUom: { color: '#475569', fontSize: 11, fontWeight: '600' },
+  pdfItemTotal: { color: '#0f172a', fontSize: 12, fontWeight: '700', marginTop: 2 },
   disclaimerBox: { backgroundColor: 'rgba(16,185,129,0.1)', padding: 10, borderRadius: 8, marginBottom: 16 },
   disclaimerText: { color: '#10b981', fontSize: 11, textAlign: 'center', fontWeight: '600' },
   pdfActions: { flexDirection: 'row', gap: 10 },
