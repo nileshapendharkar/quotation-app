@@ -25,10 +25,18 @@ async function resizeImages() {
     const filePath = path.join(imagesDir, file);
     if (fs.existsSync(filePath)) {
       console.log(`Resizing ${file}...`);
-      const img = await Jimp.read(filePath);
-      img.resize(targetWidth, targetHeight);
-      await img.writeAsync(filePath);
-      console.log(`Successfully resized ${file}`);
+      // Proportional scale to preserve true aspect ratio without stretching
+      const scale = Math.min(targetWidth / img.bitmap.width, targetHeight / img.bitmap.height);
+      const newW = Math.round(img.bitmap.width * scale);
+      const newH = Math.round(img.bitmap.height * scale);
+      img.resize(newW, newH);
+
+      const canvas = new Jimp(targetWidth, targetHeight, 0x00000000);
+      const offsetX = Math.round((targetWidth - newW) / 2);
+      const offsetY = Math.round((targetHeight - newH) / 2);
+      canvas.composite(img, offsetX, offsetY);
+      await canvas.writeAsync(filePath);
+      console.log(`Successfully resized ${file} proportionally`);
     } else {
       console.log(`File not found: ${file}`);
     }
