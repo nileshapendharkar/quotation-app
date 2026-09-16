@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const { MongoClient } = require('mongodb');
 
 const DB_FILE = path.join(__dirname, 'db_data.json');
