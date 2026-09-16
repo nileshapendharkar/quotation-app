@@ -1,0 +1,30 @@
+{
+  "name": "quotation-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unified monorepo for Quotation App: Backend API, Admin Web Dashboard, and Mobile App.",
+  "workspaces": [
+    "admin",
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "start:backend": "npm --prefix backend start",
+    "dev:admin": "npm --prefix admin run dev",
+    "build:admin": "npm --prefix admin run build",
+    "start:admin": "npm --prefix admin start",
+    "dev:mobile": "npm --prefix mobile start",
+    "dev:mobile:web": "npm --prefix mobile run web"
+  },
+  "keywords": [
+    "quotation-app",
+    "monorepo",
+    "express",
+    "nextjs",
+    "react-native",
+    "expo"
+  ],
+  "author": "nileshapendharkar",
+  "license": "ISC"
+}
