@@ -1,9 +1,22 @@
-# Quotation App (Monorepo)
+# Quotation App — Ganesh Gouri Industries Pvt Ltd
 
-A unified repository containing the complete full-stack architecture for the Product Quotation platform:
+Official unified full-stack monorepo for the Product Quotation platform developed for **Ganesh Gouri Industries Pvt Ltd**.
 
+---
+
+## 🚀 Live Deployments
+
+| Component | Platform | Live URL |
+|---|---|---|
+| **Admin Panel** | Render | [https://quotation-app-admin.onrender.com](https://quotation-app-admin.onrender.com) |
+| **Mobile App (Web)** | Vercel | [https://gouriaquaplastmobile.vercel.app/](https://gouriaquaplastmobile.vercel.app/) |
+
+---
+
+## 📦 Monorepo Architecture
+
+- **[`admin/`](./admin)**: Next.js 14 Web Administration Dashboard with analytics, quotation management, and product catalog configuration.
 - **[`backend/`](./backend)**: Node.js & Express REST API with Couchbase database integration, JWT authentication, and PDF quotation generation.
-- **[`admin/`](./admin)**: Next.js 14 Web Administration Dashboard with analytics, charts, and product catalog management.
 - **[`mobile/`](./mobile)**: React Native & Expo Mobile Application for iOS, Android, and Web clients.
 
 ---
