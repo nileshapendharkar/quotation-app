@@ -5,16 +5,17 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "db:sync": "node database/sync.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
-    "couchbase": "^4.7.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.8.0",
     "pdfkit": "^0.15.0",
     "xlsx": "^0.18.5"
   }

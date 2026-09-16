@@ -90,7 +90,7 @@ export default function UsersPage() {
     setShowPassMap(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // One-click status toggle (Active <-> Inactive) directly syncing to Couchbase
+  // One-click status toggle (Active <-> Inactive) directly syncing to MongoDB
   const handleToggleStatus = async (u) => {
     const nextStatus = u.status === 'Inactive' ? 'Active' : 'Inactive';
     const res = await apiFetch(`/admin/users/${u.id}`, {
@@ -99,7 +99,7 @@ export default function UsersPage() {
     });
 
     if (res.success) {
-      setFeedback({ type: 'success', msg: `User "${u.userId || u.name}" status updated to ${nextStatus} and synced to Couchbase!` });
+      setFeedback({ type: 'success', msg: `User "${u.userId || u.name}" status updated to ${nextStatus} and synced to MongoDB!` });
       fetchUsers();
     } else {
       setFeedback({ type: 'error', msg: res.message || 'Failed to update user status' });
@@ -127,7 +127,7 @@ export default function UsersPage() {
     setSubmitting(false);
 
     if (res.success) {
-      setFeedback({ type: 'success', msg: `User "${newUserId}" created and synced to Couchbase!` });
+      setFeedback({ type: 'success', msg: `User "${newUserId}" created and synced to MongoDB!` });
       setShowAddModal(false);
       setNewUserId(''); setNewPassword(''); setNewName(''); setNewCompanyAddress(''); setNewState('Maharashtra'); setNewStatus('Active');
       fetchUsers();
@@ -173,7 +173,7 @@ export default function UsersPage() {
     setSubmitting(false);
 
     if (res.success) {
-      setFeedback({ type: 'success', msg: `User "${editUserId}" updated and synced to Couchbase!` });
+      setFeedback({ type: 'success', msg: `User "${editUserId}" updated and synced to MongoDB!` });
       setShowEditModal(false);
       setEditUserObj(null);
       fetchUsers();
@@ -256,12 +256,12 @@ export default function UsersPage() {
   // Remove / Delete User from Admin Panel
   const handleDeleteUser = async (user) => {
     const userLabel = user.userId || user.mobile || user.name;
-    if (!confirm(`Are you sure you want to remove user "${userLabel}"? This will permanently remove access and sync directly to Couchbase.`)) return;
+    if (!confirm(`Are you sure you want to remove user "${userLabel}"? This will permanently remove access and sync directly to MongoDB.`)) return;
 
     const res = await apiFetch(`/admin/users/${user.id}`, { method: 'DELETE' });
 
     if (res.success) {
-      setFeedback({ type: 'success', msg: `User ${userLabel} removed successfully from Admin Panel and Couchbase.` });
+      setFeedback({ type: 'success', msg: `User ${userLabel} removed successfully from Admin Panel and MongoDB.` });
       fetchUsers();
     } else {
       setFeedback({ type: 'error', msg: res.message || 'Failed to delete user' });
@@ -429,7 +429,7 @@ export default function UsersPage() {
           <div>
             <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>Authorized App Users ({users.length})</h1>
             <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
-              Manage access credentials (User ID, Password, Account Name, Physical Address, State, Status). Synced with Couchbase Capella.
+              Manage access credentials (User ID, Password, Account Name, Physical Address, State, Status). Synced with MongoDB Atlas.
             </p>
           </div>
         </div>
@@ -564,7 +564,7 @@ export default function UsersPage() {
           </div>
           
           <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', color: '#9ca3af', fontSize: '13px' }}>
-            Total {filteredUsers.length} authorized app users in Couchbase
+            Total {filteredUsers.length} authorized app users in MongoDB
           </div>
         </div>
       </div>
@@ -652,7 +652,7 @@ export default function UsersPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
                 <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
                 <button type="submit" className="btn-primary" style={{ background: '#4f46e5' }} disabled={submitting}>
-                  {submitting ? 'Adding...' : 'Add & Sync Couchbase'}
+                  {submitting ? 'Adding...' : 'Add & Sync MongoDB'}
                 </button>
               </div>
             </form>
@@ -739,7 +739,7 @@ export default function UsersPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
                 <button type="button" className="btn-secondary" onClick={() => { setShowEditModal(false); setEditUserObj(null); }}>Cancel</button>
                 <button type="submit" className="btn-primary" style={{ background: '#4f46e5' }} disabled={submitting}>
-                  {submitting ? 'Saving...' : 'Save & Sync Couchbase'}
+                  {submitting ? 'Saving...' : 'Save & Sync MongoDB'}
                 </button>
               </div>
             </form>

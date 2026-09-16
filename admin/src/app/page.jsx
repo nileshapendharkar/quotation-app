@@ -613,7 +613,7 @@ export default function DashboardPage() {
                   <TrendingUp size={14} style={{ marginRight: '2px' }} /> Dynamic
                 </span>
               </div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Live Couchbase Capella Stream</div>
+              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Live MongoDB Atlas Stream</div>
             </div>
 
             <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#fff', borderRadius: '12px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
@@ -846,7 +846,7 @@ export default function DashboardPage() {
 
             <div style={{ marginTop: '16px', padding: '10px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '11px', color: '#15803d', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Zap size={14} color="#16a34a" /> 
-              <span>Dynamic Couchbase Sync</span>
+              <span>Dynamic MongoDB Sync</span>
             </div>
           </div>
         );
@@ -923,7 +923,7 @@ export default function DashboardPage() {
               <LayoutGrid size={24} color="#4f46e5" /> Executive Dynamic Dashboard
             </h1>
             <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>
-              100% Dynamic Data Visualizations with live time-range filtering and Couchbase Capella polling.
+              100% Dynamic Data Visualizations with live time-range filtering and MongoDB Atlas polling.
             </p>
           </div>
 

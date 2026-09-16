@@ -16,7 +16,7 @@ Official unified full-stack monorepo for the Product Quotation platform develope
 ## 📦 Monorepo Architecture
 
 - **[`admin/`](./admin)**: Next.js 14 Web Administration Dashboard with analytics, quotation management, and product catalog configuration.
-- **[`backend/`](./backend)**: Node.js & Express REST API with Couchbase database integration, JWT authentication, and PDF quotation generation.
+- **[`backend/`](./backend)**: Node.js & Express REST API with MongoDB Atlas database integration, JWT authentication, and PDF quotation generation.
 - **[`mobile/`](./mobile)**: React Native & Expo Mobile Application for iOS, Android, and Web clients.
 
 ---
@@ -32,7 +32,7 @@ quotation-app/
 │   └── package.json
 ├── backend/                   # Express / Node.js API Service
 │   ├── controllers/           # Auth, product, quotation, and user controllers
-│   ├── database/              # Couchbase connection & migrations
+│   ├── database/              # MongoDB connection, store & migrations
 │   ├── middleware/            # Auth & request validation
 │   ├── routes/                # API route endpoints
 │   ├── server.js              # Application entry point
@@ -64,10 +64,8 @@ npm run dev
 **Key Environment Variables (`backend/.env`):**
 ```env
 PORT=5000
-COUCHBASE_URL=couchbase://127.0.0.1
-COUCHBASE_USERNAME=your_username
-COUCHBASE_PASSWORD=your_password
-COUCHBASE_BUCKET=quotation_app
+MONGODB_URI=mongodb+srv://username:password@cluster0.mongodb.net/quotation_app?retryWrites=true&w=majority
+MONGODB_DB_NAME=quotation_app
 JWT_SECRET=your_jwt_secret
 ```
 

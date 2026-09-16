@@ -685,7 +685,7 @@ export default function ProductsPage() {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
                 <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn-primary" disabled={submitting}>
-                  {submitting ? 'Saving...' : 'Save & Sync Couchbase'}
+                  {submitting ? 'Saving...' : 'Save & Sync MongoDB'}
                 </button>
               </div>
             </form>
