@@ -1,0 +1,182 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, SafeAreaView } from 'react-native';
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react-native';
+import { apiRequest } from '../api';
+
+export default function ForgotPasswordScreen({ onNavigateLogin }) {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const handleReset = async () => {
+    setError('');
+    setMessage('');
+    if (!email) {
+      setError('Please enter your email');
+      return;
+    }
+    setLoading(true);
+    const res = await apiRequest('/auth/forgot-password', 'POST', { email });
+    setLoading(false);
+
+    if (res.success) {
+      setMessage(res.message);
+    } else {
+      setError(res.message);
+    }
+  };
+
+  return (
+    <ImageBackground source={require('../../assets/splash_bg.png')} style={styles.background} resizeMode="cover">
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+      <TouchableOpacity onPress={onNavigateLogin} style={styles.backBtn}>
+        <ArrowLeft size={20} color="#0ea5e9" />
+        <Text style={styles.backText}>Back to Login</Text>
+      </TouchableOpacity>
+
+      <View style={styles.header}>
+        <Text style={styles.title}>Forgot Password?</Text>
+        <Text style={styles.subtitle}>Enter your email to receive password reset instructions</Text>
+      </View>
+
+      {message ? (
+        <View style={styles.successBox}>
+          <CheckCircle size={20} color="#10b981" style={{ marginBottom: 6 }} />
+          <Text style={styles.successText}>{message}</Text>
+        </View>
+      ) : null}
+
+      {error ? (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
+
+      <View style={styles.form}>
+        <View style={styles.inputContainer}>
+          <Mail size={18} color="#64748b" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Registered Email Address"
+            placeholderTextColor="#64748b"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+        </View>
+
+        <TouchableOpacity style={styles.submitBtn} onPress={handleReset} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={styles.submitText}>Send Reset Link</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+    </SafeAreaView>
+  </ImageBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 30,
+  },
+  backText: {
+    color: '#0ea5e9',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  header: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  successBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  successText: {
+    color: '#10b981',
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  errorBox: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#ef4444',
+    textAlign: 'center',
+    fontSize: 13,
+  },
+  form: {
+    gap: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 50,
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    color: '#0f172a',
+    fontSize: 14,
+  },
+  submitBtn: {
+    backgroundColor: '#0ea5e9',
+    height: 50,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+});

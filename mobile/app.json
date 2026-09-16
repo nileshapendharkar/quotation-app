@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Gouri Aqua Plast",
+    "slug": "gouri-aqua-plast",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "assets/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ganeshgouri.quotationapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.ganeshgouri.quotationapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "owner": "npendharkar8",
+    "extra": {
+      "eas": {
+        "projectId": "4cc922c5-1c28-4a4e-a0eb-93f28bff4370"
+      }
+    }
+  }
+}

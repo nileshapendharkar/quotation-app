@@ -1,0 +1,45 @@
+{
+  "name": "quotation-mobile-app",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build": "npx expo export -p web"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~3.1.3",
+    "@react-native-async-storage/async-storage": "1.21.0",
+    "expo": "~50.0.14",
+    "expo-image-picker": "~14.7.1",
+    "expo-print": "~12.8.1",
+    "expo-sharing": "~11.10.0",
+    "expo-splash-screen": "~0.26.5",
+    "expo-status-bar": "~1.11.1",
+    "lucide-react-native": "^0.344.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.73.6",
+    "react-native-svg": "14.1.0",
+    "react-native-web": "~0.19.10"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "jimp": "^0.16.1"
+  },
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nileshapendharkar/quotation-app-mobile.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nileshapendharkar/quotation-app-mobile/issues"
+  },
+  "homepage": "https://github.com/nileshapendharkar/quotation-app-mobile#readme",
+  "description": ""
+}
