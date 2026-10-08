@@ -8,7 +8,8 @@ Official unified full-stack monorepo for the Product Quotation platform develope
 
 | Component | Platform | Live URL |
 |---|---|---|
-| **Admin Panel** | Render | [https://quotation-app-admin.onrender.com](https://quotation-app-admin.onrender.com) |
+| **Admin Panel** | Vercel | [https://quotation-app-admin-master.vercel.app](https://quotation-app-admin-master.vercel.app) |
+| **Backend API** | Vercel | [https://quotation-app-backend-master.vercel.app](https://quotation-app-backend-master.vercel.app) |
 | **Mobile App (Web)** | Vercel | [https://gouriaquaplastmobile.vercel.app/](https://gouriaquaplastmobile.vercel.app/) |
 
 ---
