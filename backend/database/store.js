@@ -1,42 +1,53 @@
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const { MongoClient } = require('mongodb');
+let couchbase = null;
+try {
+  couchbase = require('couchbase');
+} catch (e) {
+  console.warn('⚠️ Couchbase module not loaded:', e.message);
+}
 
 const DB_FILE = path.join(__dirname, 'db_data.json');
-const MONGO_DOC_KEY = 'appdata';
+const COUCHBASE_DOC_KEY = 'appdata';
 
 // In-memory cache to avoid re-reading DB on every request
 let cachedData = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 30 * 1000; // 30 seconds
 
-// MongoDB Setup
-let mongoClient = null;
-let mongoCollection = null;
-let isMongoConnected = false;
+// Couchbase Setup
+let cbCluster = null;
+let cbCollection = null;
+let isCouchbaseConnected = false;
 let hasAttemptedConnection = false;
 
-async function connectMongo() {
-  if (isMongoConnected) return;
+async function connectCouchbase() {
+  if (!couchbase) return;
+  if (isCouchbaseConnected) return;
   if (hasAttemptedConnection) return;
   hasAttemptedConnection = true;
-  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
-  const dbName = process.env.MONGODB_DB_NAME || 'quotation_app';
-  const collectionName = process.env.MONGODB_COLLECTION || 'quotation_state';
-  if (!uri) return;
+  const connStr = process.env.COUCHBASE_URI;
+  const username = process.env.COUCHBASE_USER;
+  const password = process.env.COUCHBASE_PASSWORD;
+  const bucketName = process.env.COUCHBASE_BUCKET || 'quotation_app';
+  if (!connStr || !username || !password) return;
   try {
-    mongoClient = new MongoClient(uri, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 10000,
-    });
-    await mongoClient.connect();
-    const db = mongoClient.db(dbName);
-    mongoCollection = db.collection(collectionName);
-    isMongoConnected = true;
-    console.log(`✅ Connected to MongoDB (${dbName}.${collectionName}) for persistent storage.`);
+    const certPath = path.join(__dirname, 'couchbase-root-ca.pem');
+    const options = {
+      username,
+      password,
+      configProfile: 'wanDevelopment',
+    };
+    if (fs.existsSync(certPath)) {
+      options.trustStorePath = certPath;
+    }
+    cbCluster = await couchbase.connect(connStr, options);
+    const bucket = cbCluster.bucket(bucketName);
+    cbCollection = bucket.defaultCollection();
+    isCouchbaseConnected = true;
+    console.log(`✅ Connected to Couchbase (bucket: ${bucketName}) for persistent storage.`);
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err.message || err);
+    console.error('❌ Couchbase connection error:', err.constructor.name, '-', err.message || err);
   }
 }
 
@@ -1750,54 +1761,50 @@ async function readData() {
     console.error('❌ Failed to read DB_FILE:', e);
   }
 
-  await connectMongo();
-  let dbData = null;
+  await connectCouchbase();
+  let cbData = null;
 
-  if (isMongoConnected) {
+  if (isCouchbaseConnected) {
     try {
-      const doc = await mongoCollection.findOne({ _id: MONGO_DOC_KEY });
-      if (doc && doc.data) {
-        dbData = doc.data;
-      } else {
-        const seeded = fileData || seedProducts({ ...initialData });
-        await mongoCollection.updateOne(
-          { _id: MONGO_DOC_KEY },
-          { $set: { data: seeded, updatedAt: new Date() } },
-          { upsert: true }
-        );
-        dbData = seeded;
-      }
+      const result = await cbCollection.get(COUCHBASE_DOC_KEY);
+      cbData = result.value;
     } catch (err) {
-      console.error('❌ MongoDB read error:', err.message || err);
+      if (err.constructor && err.constructor.name === 'DocumentNotFoundError') {
+        const seeded = fileData || seedProducts({ ...initialData });
+        await cbCollection.upsert(COUCHBASE_DOC_KEY, seeded);
+        cbData = seeded;
+      } else {
+        console.error('❌ Couchbase read error:', err.message || err);
+      }
     }
   }
 
-  // Merge fileData and dbData so added products/categories are never lost across logouts/logins
-  let finalData = dbData || fileData || seedProducts({ ...initialData });
+  // Merge fileData and cbData so added products/categories are never lost across logouts/logins
+  let finalData = cbData || fileData || seedProducts({ ...initialData });
 
-  if (fileData && dbData) {
+  if (fileData && cbData) {
     // Merge products
     const productMap = new Map();
     (fileData.products || []).forEach(p => productMap.set(p.id, p));
-    (dbData.products || []).forEach(p => productMap.set(p.id, p));
+    (cbData.products || []).forEach(p => productMap.set(p.id, p));
     finalData.products = Array.from(productMap.values());
 
     // Merge categories
     const catMap = new Map();
     (fileData.categories || []).forEach(c => catMap.set(c.id, c));
-    (dbData.categories || []).forEach(c => catMap.set(c.id, c));
+    (cbData.categories || []).forEach(c => catMap.set(c.id, c));
     finalData.categories = Array.from(catMap.values());
 
     // Merge subcategories
     const subCatMap = new Map();
     (fileData.subCategories || []).forEach(s => subCatMap.set(s.id, s));
-    (dbData.subCategories || []).forEach(s => subCatMap.set(s.id, s));
+    (cbData.subCategories || []).forEach(s => subCatMap.set(s.id, s));
     finalData.subCategories = Array.from(subCatMap.values());
 
     // Merge users
     const userMap = new Map();
     (fileData.users || []).forEach(u => userMap.set(u.id, u));
-    (dbData.users || []).forEach(u => userMap.set(u.id, u));
+    (cbData.users || []).forEach(u => userMap.set(u.id, u));
     finalData.users = Array.from(userMap.values());
   }
 
@@ -1824,24 +1831,19 @@ async function writeData(data) {
     console.error('❌ Local DB write error:', err);
   }
 
-  // 2. MongoDB Cloud Persistence Sync
-  await connectMongo();
-  if (isMongoConnected) {
+  // 2. Couchbase Cloud Persistence Sync
+  await connectCouchbase();
+  if (isCouchbaseConnected) {
     try {
-      await mongoCollection.updateOne(
-        { _id: MONGO_DOC_KEY },
-        { $set: { data, updatedAt: new Date() } },
-        { upsert: true }
-      );
-      console.log('✅ Auto-synced changes to MongoDB cluster.');
+      await cbCollection.upsert(COUCHBASE_DOC_KEY, data);
+      console.log('✅ Auto-synced changes to Couchbase cluster.');
     } catch (err) {
-      console.error('❌ MongoDB write error:', err.message || err);
+      console.error('❌ Couchbase write error:', err.message || err);
     }
   }
 }
 
 module.exports = {
   readData,
-  writeData,
-  connectMongo
+  writeData
 };
